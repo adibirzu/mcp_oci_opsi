@@ -238,6 +238,18 @@ After running the tenancy review, you can ask these questions with **instant res
 "List all ATP databases"                           → Instant!
 ```
 
+**Example: Fleet Summary**
+
+![Fleet Summary](Screenshots/fleet.png)
+
+*Fleet overview showing database counts, types, and compartment distribution - instant response with zero API calls*
+
+**Example: Database Search Results**
+
+![Database List](Screenshots/dbs.png)
+
+*Comprehensive database list with OCIDs, types, and compartments - cached for instant queries*
+
 ### Next Steps
 
 1. **Run the tenancy review** (takes 2-5 minutes depending on fleet size)
@@ -293,6 +305,12 @@ Claude, how many databases do I have?
 Claude, find database [YOUR_DATABASE_NAME]
 Claude, show all [COMPARTMENT_NAME] compartment databases
 ```
+
+**Example: Specific Database Details**
+
+![Database Details](Screenshots/ecreditsDB.png)
+
+*Detailed information for a specific database including OCID, type, compartment, and status - instant lookup from cache*
 
 See [CACHE_SYSTEM.md](CACHE_SYSTEM.md) for complete documentation.
 
@@ -680,14 +698,97 @@ ruff check mcp_oci_opsi/
 ## Project Structure
 
 ```
-mcp_oci_opsi/
-├── mcp_oci_opsi/
-│   ├── __init__.py
-│   └── main.py          # FastMCP server entrypoint
-├── .env.example         # Example environment configuration
-├── pyproject.toml       # Project metadata and dependencies
-└── README.md           # This file
+mcp-oci-opsi/
+├── mcp_oci_opsi/                    # Main package directory
+│   ├── __init__.py                  # Package initialization
+│   ├── main.py                      # FastMCP server entrypoint
+│   ├── cache.py                     # Database cache implementation
+│   ├── config.py                    # OCI configuration management
+│   ├── oci_clients.py               # OCI client factories
+│   ├── visualization.py             # ASCII chart visualization utilities
+│   ├── tools_cache.py               # Fast cache MCP tools (7 tools)
+│   ├── tools_opsi.py                # Operations Insights core tools (5 tools)
+│   ├── tools_opsi_extended.py       # Extended OPSI tools (9 tools)
+│   ├── tools_dbmanagement.py        # Database Management core tools (4 tools)
+│   ├── tools_dbmanagement_monitoring.py  # DBM monitoring tools (11 tools)
+│   ├── tools_sqlwatch.py            # SQL Watch management (4 tools)
+│   ├── tools_database_registration.py    # DB registration tools (4 tools)
+│   ├── tools_oracle_database.py     # Direct Oracle DB queries (6 tools)
+│   └── tools_visualization.py       # Visualization tools (3 tools)
+│
+├── scripts/                         # Setup and maintenance scripts
+│   ├── tenancy_review.py            # Comprehensive tenancy scanner (Python)
+│   ├── setup_and_build.sh           # Complete automated setup
+│   ├── quick_cache_build.sh         # Quick cache rebuild
+│   └── README.md                    # Scripts documentation
+│
+├── prompts/                         # Documentation and examples (🔒 in .gitignore)
+│   ├── DBA_DEMO_QUESTIONS.md        # 141 example questions
+│   ├── DEMO_SCRIPT.md               # Demo flow guide
+│   ├── DEMO_CHEAT_SHEET.md          # Quick reference
+│   ├── ORACLE_DATABASE_INTEGRATION.md   # DB integration guide
+│   ├── PROFILE_MANAGEMENT.md        # Profile management
+│   ├── VISUALIZATION_EXAMPLES.md    # Chart examples
+│   └── *.md.local                   # User-specific files (ignored)
+│
+├── Documentation (Root)             # Main documentation files
+│   ├── README.md                    # This file - complete overview
+│   ├── QUICK_START.md               # 5-minute setup guide
+│   ├── TENANCY_REVIEW_GUIDE.md      # Complete optimization guide
+│   ├── SETUP.md                     # Detailed installation
+│   ├── SECURITY.md                  # 🔒 Security guidelines
+│   ├── CACHE_SYSTEM.md              # Cache documentation
+│   ├── CONTRIBUTING.md              # Contribution guidelines
+│   ├── SESSION_SUMMARY.md           # Latest enhancements
+│   └── GITIGNORE_UPDATE_SUMMARY.md  # Gitignore changes
+│
+├── Configuration Files
+│   ├── pyproject.toml               # Project metadata and dependencies
+│   ├── .env.example                 # Example environment configuration
+│   ├── .gitignore                   # Protected files list
+│   └── build_cache.py               # Legacy cache builder (use scripts/ instead)
+│
+└── Protected Files (Not in Git)     # 🔒 Sensitive data
+    ├── .env                         # Environment variables (user-specific)
+    ├── .env.local                   # Local overrides (user-specific)
+    ├── *.local                      # All local files (user-specific)
+    ├── ~/.mcp_oci_opsi_cache.json   # Main cache (home directory)
+    ├── ~/.mcp_oci_opsi/             # Reports directory (home directory)
+    │   └── tenancy_review_*.json    # Tenancy review reports
+    ├── ~/.oci/                      # OCI configuration (home directory)
+    ├── prompts/                     # User-specific prompts (in repo but ignored)
+    ├── *.log                        # All log files
+    └── *_cache.json                 # Any cache files
 ```
+
+### Key Directories
+
+- **`mcp_oci_opsi/`** - Core Python package with all MCP tools (58 total tools)
+- **`scripts/`** - Setup and maintenance automation scripts
+- **`prompts/`** - Documentation and examples (🔒 protected by .gitignore)
+- **Root** - Main documentation and configuration files
+
+### Protected Files (🔒 Not Committed)
+
+All sensitive files are automatically protected by `.gitignore`:
+- Cache files, tenancy reports, logs
+- Environment variables, credentials, keys
+- User-specific prompts and configurations
+- See [SECURITY.md](SECURITY.md) for complete list
+
+### Module Organization (58 Tools Total)
+
+1. **Utility Tools** (4) - `main.py`
+2. **Fast Cache Tools** (7) - `tools_cache.py`
+3. **OPSI Core** (5) - `tools_opsi.py`
+4. **OPSI Extended** (9) - `tools_opsi_extended.py`
+5. **DB Management** (4) - `tools_dbmanagement.py`
+6. **DB Monitoring** (11) - `tools_dbmanagement_monitoring.py`
+7. **SQL Watch** (4) - `tools_sqlwatch.py`
+8. **DB Registration** (4) - `tools_database_registration.py`
+9. **Oracle DB Queries** (6) - `tools_oracle_database.py`
+10. **Visualization** (3) - `tools_visualization.py`
+11. **Identity** (1) - `tools_opsi.py`
 
 ## License
 
