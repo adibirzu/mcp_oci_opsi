@@ -1,0 +1,276 @@
+# Claude Desktop Integration - Complete ✅
+
+## Configuration Added
+
+The OCI OPSI MCP server has been successfully added to Claude Desktop!
+
+**Location:** `/Users/abirzu/Library/Application Support/Claude/claude_desktop_config.json`
+
+**Server Name:** `oci-opsi`
+
+## Configuration Details
+
+```json
+{
+  "oci-opsi": {
+    "command": "python3",
+    "args": [
+      "-m",
+      "mcp_oci_opsi.main"
+    ],
+    "cwd": "/Users/abirzu/dev/mcp_oci_opsi",
+    "env": {
+      "OCI_CLI_PROFILE": "emdemo",
+      "OCI_REGION": "uk-london-1",
+      "OCI_COMPARTMENT_ID": "ocid1.compartment.oc1..aaaaaaaaje7atqmhsmy3ca4exqvq6zkhjeuzs3ioe2q2exarjmlqey3iljtq"
+    }
+  }
+}
+```
+
+## Profile Settings
+
+- **Profile:** emdemo
+- **Region:** UK South (London) - `uk-london-1`
+- **Compartment:** OandM-Demo/OperationsInsights
+- **Fleet:** 57 Databases, 7 Hosts
+
+## Next Steps
+
+### 1. Restart Claude Desktop
+
+**Important:** You must restart Claude Desktop for the new MCP server to be loaded.
+
+```bash
+# Kill Claude Desktop
+killall Claude
+
+# Or use Activity Monitor to quit Claude Desktop
+# Then relaunch from Applications
+```
+
+### 2. Verify the Server is Loaded
+
+After restarting Claude Desktop, you can verify the server is working by asking:
+
+```
+Claude, ping the OCI OPSI server
+```
+
+Expected response: `{"status": "ok", "message": "OCI OPSI MCP server is running"}`
+
+### 3. Test Basic Functionality
+
+**Check your identity:**
+```
+Claude, who am I?
+```
+
+Expected response:
+- Profile: emdemo
+- Region: uk-london-1
+- Tenancy and user OCIDs
+
+**List available profiles:**
+```
+Claude, list all available OCI profiles
+```
+
+Expected response:
+- DEFAULT
+- default
+- emdemo (current)
+
+**List database insights:**
+```
+Claude, list database insights in my compartment
+```
+
+Expected response: List of databases in the OperationsInsights compartment
+
+### 4. Explore the Fleet
+
+**Get Operations Insights summary:**
+```
+Claude, show me the Operations Insights summary for my compartment
+```
+
+**List compartments:**
+```
+Claude, list all compartments
+```
+
+**Get fleet health metrics:**
+```
+Claude, show me fleet health metrics
+```
+
+## Available Tools (48 Total)
+
+Once the server is loaded, you'll have access to all 48 tools:
+
+### Core Operations
+- Database Insights (5 tools)
+- Host & Exadata Insights (3 tools)
+- SQL Performance & Capacity Planning (3 tools)
+- SQL Watch Management (4 tools)
+- Database Management (4 tools)
+- AWR Reports (2 tools)
+- Database Monitoring & Diagnostics (11 tools)
+- Fleet Management (1 tool)
+
+### Advanced Features
+- Database Registration (4 tools)
+- Direct Oracle Database Queries (6 tools)
+- Profile Management (2 tools)
+- Utility Tools (2 tools)
+- Identity & Compartments (1 tool)
+
+## Example Workflows
+
+### Workflow 1: Fleet Overview
+```
+1. Claude, who am I?
+2. Claude, show me the Operations Insights summary
+3. Claude, list all database insights
+4. Claude, show me fleet health metrics
+```
+
+### Workflow 2: Database Performance Analysis
+```
+1. Claude, list database insights
+2. Claude, show me SQL statistics for the past 7 days
+3. Claude, get top SQL statements by CPU usage
+4. Claude, show me capacity trends for CPU
+```
+
+### Workflow 3: Real-Time Diagnostics
+```
+1. Claude, list managed databases
+2. Claude, get ADDM report for database X
+3. Claude, show me ASH wait events
+4. Claude, list alert logs with severity CRITICAL
+```
+
+### Workflow 4: Profile Management
+```
+1. Claude, list all OCI profiles
+2. Claude, get profile info for emdemo
+3. Claude, show me the current compartment configuration
+```
+
+## Troubleshooting
+
+### Server Not Loading
+
+**Check Claude Desktop logs:**
+```bash
+# View logs
+tail -f ~/Library/Logs/Claude/mcp*.log
+
+# Or check specific server log
+tail -f ~/Library/Logs/Claude/mcp-oci-opsi.log
+```
+
+**Common Issues:**
+
+1. **Python not found**
+   - Solution: Verify python3 is in PATH
+   ```bash
+   which python3
+   ```
+
+2. **Module not found (mcp_oci_opsi)**
+   - Solution: Ensure the package is installed
+   ```bash
+   cd /Users/abirzu/dev/mcp_oci_opsi
+   pip3 install -e .
+   ```
+
+3. **OCI Configuration error**
+   - Solution: Verify emdemo profile exists
+   ```bash
+   cat ~/.oci/config | grep -A10 "\[emdemo\]"
+   ```
+
+4. **Permission denied on key file**
+   - Solution: Fix key permissions
+   ```bash
+   chmod 600 ~/.ssh/emdemo_oracle_*.pem
+   ```
+
+### Server Running But Not Responding
+
+**Test with OCI CLI:**
+```bash
+oci iam region list --profile emdemo --region uk-london-1
+```
+
+**Check compartment access:**
+```bash
+oci opsi database-insights list \
+  --compartment-id ocid1.compartment.oc1..aaaaaaaaje7atqmhsmy3ca4exqvq6zkhjeuzs3ioe2q2exarjmlqey3iljtq \
+  --region uk-london-1 \
+  --profile emdemo \
+  --limit 3
+```
+
+### Switching Profiles
+
+To use a different OCI profile:
+
+1. Edit the config file:
+```bash
+nano "/Users/abirzu/Library/Application Support/Claude/claude_desktop_config.json"
+```
+
+2. Change the `OCI_CLI_PROFILE` value:
+```json
+"env": {
+  "OCI_CLI_PROFILE": "DEFAULT",  // Change to desired profile
+  "OCI_REGION": "us-ashburn-1",
+  "OCI_COMPARTMENT_ID": "..."
+}
+```
+
+3. Restart Claude Desktop
+
+## Integration Status
+
+✅ **Configuration File:** Updated
+✅ **JSON Validation:** Passed
+✅ **Profile:** emdemo (verified)
+✅ **Region:** uk-london-1 (verified)
+✅ **Compartment:** OperationsInsights (verified)
+✅ **Fleet Access:** 57 Databases, 7 Hosts (verified)
+✅ **Total Tools:** 48
+
+## Additional MCP Servers
+
+Your Claude Desktop is also configured with:
+- threat-hunting
+- context7
+- chart-generator
+- oci-mcp-compute
+- oci-mcp-db
+- oci-mcp-network
+- oci-mcp-security
+- oci-mcp-observability
+- oci-mcp-cost
+- oci-mcp-inventory
+- oci-logan
+- **oci-opsi** (NEW)
+
+## Next Steps After Restart
+
+1. **Restart Claude Desktop** (required)
+2. **Test basic commands** (ping, whoami)
+3. **Explore the fleet** (list databases, hosts)
+4. **Try advanced features** (ADDM, ASH, AWR reports)
+5. **Profile management** (list profiles, switch if needed)
+
+---
+
+**Status: ✅ READY TO USE**
+
+Restart Claude Desktop to activate the OCI OPSI MCP server with 48 tools for comprehensive database operations and insights!

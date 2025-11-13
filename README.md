@@ -1,0 +1,655 @@
+# MCP OCI OPSI Server
+
+MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operations Insights. This server provides tools to query and analyze OCI Operations Insights data through Claude Desktop or Claude Code.
+
+## Features
+
+**Total: 58 MCP Tools for comprehensive OCI database operations**
+
+### Utility & Configuration Tools (4)
+- **ping()**: Simple health check to verify the MCP server is responsive
+- **whoami()**: Get current OCI user and tenancy information from configuration
+- **list_oci_profiles()**: List all available OCI CLI profiles and show current active profile
+- **get_profile_info()**: Get detailed configuration information for a specific profile
+
+### Fast Cache Tools - Instant Responses, Zero API Calls (7) 🚀
+- **get_fleet_summary()**: Ultra-fast fleet overview with zero API calls - minimal tokens
+- **search_databases()**: Instant database search using local cache
+- **get_databases_by_compartment()**: Get all databases in a compartment - token-efficient
+- **get_cached_statistics()**: Detailed cache statistics and metadata
+- **list_cached_compartments()**: List all compartments in cache
+- **build_database_cache()**: Build/rebuild local cache by scanning compartments recursively
+- **refresh_cache_if_needed()**: Check cache validity and refresh status
+
+### Database Insights - Core Operations (5)
+- **list_database_insights()**: List database insights in a compartment with filtering
+- **query_warehouse_standard()**: Execute SQL queries against the OPSI data warehouse
+- **list_sql_texts()**: Retrieve SQL text data and statistics for performance analysis
+- **get_operations_insights_summary()**: Get comprehensive OPSI summary for a compartment
+- **summarize_database_insights()**: Get detailed database insights metrics for time periods
+
+### Host & Exadata Insights (3)
+- **list_host_insights()**: List host insights with CPU, memory metrics
+- **list_exadata_insights()**: List Exadata infrastructure insights
+- **get_host_resource_statistics()**: Get detailed host resource utilization statistics
+
+### SQL Performance & Capacity Planning (6) 📊
+- **summarize_sql_statistics()**: Get aggregated SQL performance metrics (executions, CPU, I/O)
+- **get_database_capacity_trend()**: Analyze historical capacity trends for resource planning
+- **get_database_resource_forecast()**: ML-based forecasting for future resource needs
+- **get_capacity_trend_with_chart()** 🆕: Capacity trend WITH ASCII chart visualization + OCI Console link
+- **get_resource_forecast_with_chart()** 🆕: ML forecast WITH combined historical/forecast ASCII chart + recommendations
+- **get_exadata_rack_visualization()** 🆕: Exadata rack topology visualization + OCI Console link
+
+### SQL Watch Management (4)
+- **get_sqlwatch_status()**: Check if SQL Watch is enabled on a managed database
+- **enable_sqlwatch()**: Enable SQL Watch feature on a managed database
+- **disable_sqlwatch()**: Disable SQL Watch feature on a managed database
+- **get_sqlwatch_work_request()**: Track the status of SQL Watch enable/disable operations
+
+### Database Management - Core (4)
+- **list_managed_databases()**: List all managed databases in a compartment
+- **get_managed_database_details()**: Get detailed information about a managed database
+- **get_tablespace_usage()**: Get tablespace usage metrics and storage analytics
+- **get_database_parameters()**: View and analyze database configuration parameters
+
+### AWR (Automatic Workload Repository) (2)
+- **list_awr_snapshots()**: List available AWR snapshots for performance analysis
+- **get_awr_report()**: Generate AWR reports for detailed database performance analysis
+
+### Database Management - Monitoring & Diagnostics (11) 🆕
+- **get_database_home_metrics()**: Monitor database home availability metrics
+- **list_database_jobs()**: List and track scheduled database jobs
+- **get_addm_report()**: ADDM (Automatic Database Diagnostic Monitor) findings and recommendations
+- **get_ash_analytics()**: ASH (Active Session History) wait event analysis
+- **get_top_sql_by_metric()**: Top SQL statements ranked by CPU, I/O, or other metrics
+- **get_database_system_statistics()**: AWR system-level statistics
+- **get_database_io_statistics()**: Database I/O performance metrics from AWR
+- **list_alert_logs()**: Alert log entries with severity filtering
+- **get_database_cpu_usage()**: CPU usage metrics over time
+- **get_sql_tuning_recommendations()**: SQL tuning advisor recommendations
+- **get_database_resource_usage()**: Current resource usage summary
+
+### Fleet Management (1)
+- **get_fleet_health_metrics()**: Get aggregated health metrics across database fleet
+
+### Database Registration & Enablement (4) 🆕
+- **enable_database_insights()**: Register a database with Operations Insights
+- **disable_database_insights()**: Unregister a database from Operations Insights
+- **check_database_insight_status()**: Check if Operations Insights is enabled
+- **get_database_info()**: Get comprehensive database information from OCI
+
+### Direct Oracle Database Queries (6) 🆕
+- **query_oracle_database()**: Execute SQL queries directly against Oracle Database
+- **query_with_wallet()**: Query Autonomous Database using wallet authentication
+- **get_oracle_database_metadata()**: Get database version and instance information
+- **list_oracle_tables()**: List all tables in a schema
+- **describe_oracle_table()**: Get table structure with columns and data types
+- **get_oracle_session_info()**: Get current database session information
+
+### Identity & Organization (1)
+- **list_compartments()**: Enumerate all compartments in your OCI tenancy
+
+## Prerequisites
+
+1. **Python 3.10 or higher**
+2. **OCI CLI configured**: You need a valid OCI configuration file at `~/.oci/config`
+   - Follow the [OCI CLI Configuration guide](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/sdkconfig.htm)
+3. **OCI API Key**: Ensure your OCI user has appropriate permissions for Operations Insights
+
+## Installation
+
+### Using uv (recommended)
+
+```bash
+# Install uv if not already installed
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone or navigate to the project directory
+cd mcp_oci_opsi
+
+# Create virtual environment and install dependencies
+uv venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install base dependencies
+uv pip install -e .
+
+# Optional: Install Oracle Database driver for direct SQL queries
+uv pip install -e ".[database]"
+```
+
+### Using pip
+
+```bash
+# Clone or navigate to the project directory
+cd mcp_oci_opsi
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install base dependencies
+pip install -e .
+
+# Optional: Install Oracle Database driver for direct SQL queries
+pip install -e ".[database]"
+```
+
+## Configuration
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` and configure your OCI settings:
+   ```
+   OCI_CLI_PROFILE=DEFAULT
+   OCI_REGION=us-ashburn-1
+   ```
+
+### Managing OCI Profiles
+
+The MCP server supports multiple OCI CLI profiles. You can easily switch between different credentials:
+
+**List available profiles:**
+```
+Claude, list all available OCI profiles
+```
+
+**Get current profile info:**
+```
+Claude, who am I? (or use whoami tool)
+```
+
+**Get info about a specific profile:**
+```
+Claude, get profile info for emdemo
+```
+
+**Switch to a different profile:**
+
+1. Edit `.env` file:
+   ```bash
+   # Change from:
+   OCI_CLI_PROFILE=DEFAULT
+
+   # To:
+   OCI_CLI_PROFILE=emdemo
+   ```
+
+2. Restart the MCP server or Claude Desktop/Code
+
+Available profiles are read from your `~/.oci/config` file.
+
+## Quick Start: Tenancy Review (5 Minutes) 🎯 RECOMMENDED!
+
+**Before using the MCP server, run a one-time tenancy review to optimize performance and reduce token usage by 80%!**
+
+The tenancy review scans your OCI environment and builds an optimized cache for instant database queries.
+
+### Why Run a Tenancy Review?
+
+| Without Review | After Review |
+|----------------|--------------|
+| 2-5 seconds per query | **< 50ms (instant)** |
+| 500-1000 tokens | **100-200 tokens (80% savings)** |
+| Multiple API calls | **Zero API calls** |
+
+### One-Command Setup
+
+```bash
+cd /Users/abirzu/dev/mcp_oci_opsi
+./scripts/quick_cache_build.sh
+```
+
+**Or with a specific profile:**
+```bash
+./scripts/quick_cache_build.sh --profile emdemo
+```
+
+That's it! The script will:
+1. ✅ Scan all compartments in your tenancy
+2. ✅ Discover all databases, hosts, and Exadata systems
+3. ✅ Build an optimized cache for instant queries
+4. ✅ Generate a comprehensive inventory report
+5. ✅ Provide recommendations for your environment
+
+### What You Get
+
+After running the tenancy review, you can ask these questions with **instant responses**:
+
+```
+"How many databases do I have?"                    → Instant!
+"Find database ECREDITS"                           → Instant!
+"Show me databases in the Production compartment"  → Instant!
+"What types of databases do I have?"               → Instant!
+"List all ATP databases"                           → Instant!
+```
+
+### Next Steps
+
+1. **Run the tenancy review** (takes 2-5 minutes depending on fleet size)
+2. **Start using the MCP server** with Claude Desktop or Claude Code
+3. **Try fast cache queries** for instant inventory responses
+4. **Use API tools** for real-time performance metrics and analytics
+
+📖 **See [TENANCY_REVIEW_GUIDE.md](TENANCY_REVIEW_GUIDE.md) for complete documentation**
+
+### When to Re-run
+
+Re-run the tenancy review when:
+- You add or remove databases
+- You reorganize compartments
+- The cache is older than 24 hours
+- You want updated inventory statistics
+
+```bash
+# Quick refresh
+./scripts/quick_cache_build.sh
+```
+
+## Fast Cache System 🚀 NEW!
+
+The MCP server includes a high-performance caching system that provides **instant responses with zero API calls** for database inventory queries.
+
+### Key Benefits
+
+✅ **Instant Responses** - Sub-millisecond lookups, no API calls
+✅ **Token Efficient** - 80% fewer tokens for common questions
+✅ **Scalable** - Cache hundreds of databases across multiple compartments
+✅ **Fleet-Wide** - All hosts instantly accessible
+✅ **Smart Caching** - 24-hour validity with easy refresh
+
+### Quick Start
+
+**Configure compartments to cache:**
+
+Add your compartment OCIDs to `.env`:
+```bash
+CACHE_COMPARTMENT_IDS=ocid1.compartment.oc1..aaa,ocid1.compartment.oc1..bbb
+```
+
+**Build initial cache:**
+```bash
+python3 build_cache.py
+```
+
+**Use in Claude:**
+```
+Claude, show me fleet summary
+Claude, how many databases do I have?
+Claude, find database [YOUR_DATABASE_NAME]
+Claude, show all [COMPARTMENT_NAME] compartment databases
+```
+
+See [CACHE_SYSTEM.md](CACHE_SYSTEM.md) for complete documentation.
+
+## Visualization & Charting 📊 NEW!
+
+The MCP server now includes enhanced capacity planning tools with **ASCII chart visualizations** and **OCI Console links** for graphical views.
+
+### Features
+
+✅ **ASCII Line Charts** - View trends and forecasts directly in text format
+✅ **Combined Historical + Forecast** - See past data and ML predictions together
+✅ **Capacity Recommendations** - AI-generated recommendations based on forecasts
+✅ **OCI Console Links** - Direct links to graphical dashboards
+✅ **Exadata Rack Visualization** - Text-based rack topology diagrams
+
+### Quick Examples
+
+**Capacity Trend with Chart:**
+```
+Claude, show me CPU capacity trend for the past 90 days with a chart
+```
+
+**Resource Forecast with Visualization:**
+```
+Claude, forecast CPU usage for the next 30 days and show me a chart
+```
+
+**Exadata Rack Visualization:**
+```
+Claude, show me the Exadata rack visualization for system [EXADATA_INSIGHT_ID]
+```
+
+### What You Get
+
+Each visualization tool returns:
+- 📈 **ASCII Chart**: Text-based line chart for viewing in Claude
+- 📊 **Raw Data**: Complete data points for further analysis
+- 🔗 **OCI Console URL**: Direct link to graphical charts and dashboards
+- 💡 **Recommendations**: Capacity planning insights and recommendations
+
+The ASCII charts are designed to give you immediate visual insight, while the OCI Console links provide access to the full interactive graphical experience shown in your screenshots.
+
+## Oracle Database Integration 🆕
+
+The MCP OCI OPSI server now includes comprehensive Oracle Database connectivity, providing similar capabilities to Oracle's official Database MCP server, plus unique Operations Insights integration.
+
+### Key Capabilities
+
+1. **Database Registration**: Register any database (Autonomous, ExaCS, etc.) with Operations Insights
+2. **Direct SQL Queries**: Execute queries directly against Oracle databases
+3. **Wallet Support**: Secure authentication for Autonomous Databases
+4. **Metadata Discovery**: Explore database structure, tables, and schemas
+5. **Performance Monitoring**: Combine OCI monitoring with direct database access
+
+### Quick Start: Register a Database
+
+```
+Claude, I have a database with OCID ocid1.autonomousdatabase.oc1..aaa...
+Can you register it with Operations Insights in compartment ocid1.compartment.oc1..bbb...?
+```
+
+### Quick Start: Query a Database
+
+**Using wallet (recommended for Autonomous Database):**
+
+```
+Claude, query my database using wallet:
+- Wallet location: /path/to/wallet
+- DSN: mydb_high
+- Username: ADMIN
+- Query: SELECT table_name FROM user_tables WHERE rownum <= 10
+```
+
+**Using connection string:**
+
+```
+Claude, query database "admin/password@host:1521/service":
+SELECT * FROM v$version
+```
+
+### Complete Integration Guide
+
+See [ORACLE_DATABASE_INTEGRATION.md](ORACLE_DATABASE_INTEGRATION.md) for:
+- Detailed workflow examples
+- Security best practices
+- Troubleshooting guides
+- Comparison with Oracle's official MCP server
+- All 10 database tools reference
+
+## Running the Server
+
+The server supports two transport modes:
+
+1. **stdio** (default): For use with Claude Desktop and Claude Code
+2. **HTTP**: For network-accessible server with streaming support
+
+### Transport Mode Selection
+
+Control the transport mode via environment variables:
+
+```bash
+# Run in stdio mode (default)
+python -m mcp_oci_opsi.main
+
+# Or explicitly set stdio
+FASTMCP_TRANSPORT=stdio python -m mcp_oci_opsi.main
+
+# Run in HTTP mode
+FASTMCP_HTTP=1 python -m mcp_oci_opsi.main
+
+# Or
+FASTMCP_TRANSPORT=http python -m mcp_oci_opsi.main
+```
+
+### Standalone Testing
+
+To test the server directly in stdio mode:
+
+```bash
+python -m mcp_oci_opsi.main
+```
+
+The server will start and communicate over stdio (standard input/output).
+
+### With Claude Desktop
+
+1. Locate your Claude Desktop configuration file:
+   - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+   - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+   - **Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+2. Add the MCP server configuration:
+
+```json
+{
+  "mcpServers": {
+    "oci-opsi": {
+      "command": "/Users/YOUR_USERNAME/dev/mcp_oci_opsi/.venv/bin/python",
+      "args": [
+        "-m",
+        "mcp_oci_opsi.main"
+      ],
+      "env": {
+        "OCI_CLI_PROFILE": "DEFAULT",
+        "OCI_REGION": "us-ashburn-1"
+      }
+    }
+  }
+}
+```
+
+**Important**: Replace `/Users/YOUR_USERNAME/dev/mcp_oci_opsi/.venv/bin/python` with the absolute path to your virtual environment's Python interpreter.
+
+3. Restart Claude Desktop
+
+4. The OCI OPSI tools should now be available in Claude Desktop conversations
+
+### With Claude Code
+
+1. Locate your Claude Code MCP settings file:
+   - **macOS**: `~/Library/Application Support/Claude/claude_code_mcp_settings.json`
+   - **Windows**: `%APPDATA%\Claude\claude_code_mcp_settings.json`
+   - **Linux**: `~/.config/Claude/claude_code_mcp_settings.json`
+
+2. Add the MCP server configuration:
+
+```json
+{
+  "mcpServers": {
+    "oci-opsi": {
+      "command": "/Users/YOUR_USERNAME/dev/mcp_oci_opsi/.venv/bin/python",
+      "args": [
+        "-m",
+        "mcp_oci_opsi.main"
+      ],
+      "env": {
+        "OCI_CLI_PROFILE": "DEFAULT",
+        "OCI_REGION": "us-ashburn-1"
+      }
+    }
+  }
+}
+```
+
+3. Restart Claude Code or reload the MCP servers
+
+4. The OCI OPSI tools should now be available when using Claude Code
+
+## Available Tools
+
+### Utility Tools
+
+#### ping()
+Simple health check to verify the MCP server is responsive.
+
+**Example:**
+```
+ping
+```
+
+#### whoami()
+Get current OCI user and tenancy information from configuration.
+
+**Example:**
+```
+whoami
+```
+
+### Operations Insights Tools
+
+#### list_database_insights(compartment_id, lifecycle_state?, page?, limit?)
+List database insights in a compartment with optional filtering and pagination.
+
+**Example:**
+```
+List active database insights in compartment ocid1.compartment.oc1..aaaaaa...
+```
+
+#### query_warehouse_standard(compartment_id, statement)
+Execute SQL queries against the OPSI data warehouse for performance analysis.
+
+**Example:**
+```
+Query the OPSI warehouse for CPU metrics where utilization > 80%
+```
+
+#### list_sql_texts(compartment_id, time_start, time_end, database_id?, sql_identifier?)
+Retrieve SQL text data and execution statistics for performance tuning.
+
+**Example:**
+```
+Show me SQL texts from 2024-01-01 to 2024-01-31 for database ocid1.database.oc1..bbbbb...
+```
+
+#### get_operations_insights_summary(compartment_id)
+Get comprehensive OPSI summary including all database insights for a compartment.
+
+**Example:**
+```
+Show me the Operations Insights summary for compartment ocid1.compartment.oc1..aaaaaa...
+```
+
+#### summarize_database_insights(compartment_id, database_insight_id, time_interval_start, time_interval_end)
+Get detailed CPU metrics and resource statistics for a specific database over time.
+
+**Example:**
+```
+Summarize CPU metrics for database insight ocid1.databaseinsight.oc1..aaaaaa... from 2024-01-01 to 2024-01-31
+```
+
+### SQL Watch Management Tools
+
+#### get_sqlwatch_status(database_id)
+Check if SQL Watch is enabled on a managed database.
+
+**Example:**
+```
+Check SQL Watch status for database ocid1.manageddatabase.oc1..aaaaaa...
+```
+
+#### enable_sqlwatch(database_id)
+Enable SQL Watch feature on a managed database. Returns work request ID for tracking.
+
+**Example:**
+```
+Enable SQL Watch on database ocid1.manageddatabase.oc1..aaaaaa...
+```
+
+#### disable_sqlwatch(database_id)
+Disable SQL Watch feature on a managed database. Returns work request ID for tracking.
+
+**Example:**
+```
+Disable SQL Watch on database ocid1.manageddatabase.oc1..aaaaaa...
+```
+
+#### get_sqlwatch_work_request(work_request_id)
+Track the status and progress of SQL Watch enable/disable operations.
+
+**Example:**
+```
+Get status of work request ocid1.workrequest.oc1..aaaaaa...
+```
+
+### Identity Tools
+
+#### list_compartments(compartment_id?)
+List all compartments in your OCI tenancy or under a specific compartment.
+
+**Example:**
+```
+List all compartments in my OCI tenancy
+```
+
+## Troubleshooting
+
+### OCI Configuration Issues
+
+If you encounter authentication errors:
+
+1. Verify your OCI config file exists: `cat ~/.oci/config`
+2. Ensure your API key is valid and uploaded to OCI
+3. Check that your user has the required IAM permissions
+4. Verify the region specified in your config or `.env` file
+
+### Permission Errors
+
+Ensure your OCI user has these IAM policies:
+
+```
+Allow group YourGroup to read operations-insights-family in tenancy
+Allow group YourGroup to read compartments in tenancy
+```
+
+### Module Import Errors
+
+If you see import errors, ensure you've activated the virtual environment:
+
+```bash
+source .venv/bin/activate
+```
+
+## Development
+
+### Running Tests
+
+```bash
+# Install dev dependencies
+uv pip install -e ".[dev]"
+
+# Run tests
+pytest
+```
+
+### Code Formatting
+
+```bash
+# Format code
+black mcp_oci_opsi/
+
+# Lint code
+ruff check mcp_oci_opsi/
+```
+
+## Project Structure
+
+```
+mcp_oci_opsi/
+├── mcp_oci_opsi/
+│   ├── __init__.py
+│   └── main.py          # FastMCP server entrypoint
+├── .env.example         # Example environment configuration
+├── pyproject.toml       # Project metadata and dependencies
+└── README.md           # This file
+```
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Resources
+
+- [Model Context Protocol Documentation](https://modelcontextprotocol.io/)
+- [OCI Python SDK Documentation](https://docs.oracle.com/en-us/iaas/tools/python/latest/)
+- [OCI Operations Insights Documentation](https://docs.oracle.com/en-us/iaas/operations-insights/)
+- [FastMCP Documentation](https://github.com/jlowin/fastmcp)
