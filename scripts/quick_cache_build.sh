@@ -43,6 +43,41 @@ if [ ! -f "$HOME/.oci/config" ]; then
     exit 1
 fi
 
+# Check if virtual environment exists and activate it
+if [ -d "$PROJECT_ROOT/.venv" ]; then
+    echo -e "${YELLOW}Activating virtual environment...${NC}"
+    source "$PROJECT_ROOT/.venv/bin/activate"
+elif [ -d "$PROJECT_ROOT/venv" ]; then
+    echo -e "${YELLOW}Activating virtual environment...${NC}"
+    source "$PROJECT_ROOT/venv/bin/activate"
+else
+    echo -e "${RED}ERROR: Virtual environment not found${NC}"
+    echo "Please create a virtual environment and install dependencies first:"
+    echo ""
+    echo "  cd $PROJECT_ROOT"
+    echo "  python3 -m venv .venv"
+    echo "  source .venv/bin/activate"
+    echo "  pip install -e ."
+    echo ""
+    exit 1
+fi
+
+# Verify OCI SDK is installed
+if ! python3 -c "import oci" 2>/dev/null; then
+    echo -e "${RED}ERROR: OCI SDK not installed${NC}"
+    echo "Please install dependencies first:"
+    echo ""
+    echo "  cd $PROJECT_ROOT"
+    echo "  source .venv/bin/activate"
+    echo "  pip install -e ."
+    echo ""
+    exit 1
+fi
+
+echo -e "${GREEN}✓ Virtual environment activated${NC}"
+echo -e "${GREEN}✓ Dependencies verified${NC}"
+echo ""
+
 # Parse arguments
 PROFILE_ARG=""
 if [ "$1" == "--profile" ] && [ -n "$2" ]; then

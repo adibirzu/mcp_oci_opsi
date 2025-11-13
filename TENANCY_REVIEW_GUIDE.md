@@ -93,6 +93,25 @@ python3 scripts/tenancy_review.py --list-profiles
 - Optimizes data structure for fast lookups
 - Calculates statistics and aggregations
 
+## 🔒 Security Note
+
+**IMPORTANT**: The cache and tenancy review reports contain sensitive information:
+
+- Database OCIDs, names, and compartment structure
+- Tenancy topology and resource inventory
+- User and tenancy identification
+
+All sensitive files are automatically protected:
+- ✅ Stored in home directory (`~/`) outside git repository
+- ✅ Listed in `.gitignore` to prevent accidental commits
+- ✅ User-specific and isolated
+
+**Files protected**:
+- `~/.mcp_oci_opsi_cache.json` - Main cache file
+- `~/.mcp_oci_opsi/tenancy_review_*.json` - Review reports
+
+📖 **See [SECURITY.md](SECURITY.md) for comprehensive security guidelines**
+
 ## Output and Reports
 
 ### Console Output

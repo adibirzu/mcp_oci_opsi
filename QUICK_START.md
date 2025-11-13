@@ -24,7 +24,9 @@ If you don't have OCI CLI configured:
 oci setup config
 ```
 
-## Step 2: Install (2 minutes)
+## Step 2: One-Command Setup (2 minutes) ⚡ EASIEST!
+
+**The setup script does everything for you: install dependencies AND build cache!**
 
 ```bash
 # Clone the repository
@@ -32,6 +34,20 @@ cd ~/dev  # or your preferred directory
 git clone https://github.com/yourusername/mcp-oci-opsi.git
 cd mcp-oci-opsi
 
+# Run complete setup (creates venv, installs deps, builds cache)
+./scripts/setup_and_build.sh
+```
+
+**Or with a specific profile:**
+```bash
+./scripts/setup_and_build.sh --profile emdemo
+```
+
+**Alternative: Manual Installation**
+
+If you prefer to install manually:
+
+```bash
 # Create virtual environment and install
 python3 -m venv .venv
 source .venv/bin/activate
@@ -39,19 +55,9 @@ pip install -e .
 
 # Optional: Install database features
 pip install -e ".[database]"
-```
 
-## Step 3: Run Tenancy Review (2 minutes) ⚡ CRITICAL!
-
-**This step is essential for optimal performance!**
-
-```bash
+# Build cache
 ./scripts/quick_cache_build.sh
-```
-
-**Or with a specific profile:**
-```bash
-./scripts/quick_cache_build.sh --profile emdemo
 ```
 
 Wait for it to complete. You'll see:
@@ -133,6 +139,23 @@ You now have:
 - ✅ Zero API calls for database searches
 - ✅ 58 MCP tools ready to use
 - ✅ Comprehensive inventory of your OCI environment
+
+## 🔒 Security Note
+
+**IMPORTANT**: Cache files contain sensitive OCI data and are automatically protected:
+
+- ✅ **Cache location**: `~/.mcp_oci_opsi_cache.json` (home directory, outside git)
+- ✅ **Reports location**: `~/.mcp_oci_opsi/tenancy_review_*.json`
+- ✅ **Protected by .gitignore**: Never accidentally committed
+- ✅ **User-specific**: Isolated to your account
+
+**Never commit**:
+- Cache files (`*_cache.json`)
+- Tenancy reports (`tenancy_review_*.json`)
+- Credentials (`.env`, `*.pem`)
+- Logs (`*.log`)
+
+📖 **See [SECURITY.md](SECURITY.md) for complete security guidelines**
 
 ## What's Next?
 

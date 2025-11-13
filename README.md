@@ -197,16 +197,26 @@ The tenancy review scans your OCI environment and builds an optimized cache for 
 | 500-1000 tokens | **100-200 tokens (80% savings)** |
 | Multiple API calls | **Zero API calls** |
 
-### One-Command Setup
+### One-Command Setup (Recommended - includes dependency installation)
 
 ```bash
 cd /Users/abirzu/dev/mcp_oci_opsi
-./scripts/quick_cache_build.sh
+./scripts/setup_and_build.sh
 ```
 
 **Or with a specific profile:**
 ```bash
-./scripts/quick_cache_build.sh --profile emdemo
+./scripts/setup_and_build.sh --profile emdemo
+```
+
+This script will:
+1. Create virtual environment (if needed)
+2. Install all dependencies
+3. Build the cache
+
+**If dependencies are already installed, use the faster script:**
+```bash
+./scripts/quick_cache_build.sh
 ```
 
 That's it! The script will:
@@ -285,6 +295,46 @@ Claude, show all [COMPARTMENT_NAME] compartment databases
 ```
 
 See [CACHE_SYSTEM.md](CACHE_SYSTEM.md) for complete documentation.
+
+## 🔒 Security and Privacy
+
+**IMPORTANT**: The cache files and tenancy reports contain sensitive information about your OCI environment.
+
+### Protected by .gitignore
+
+All sensitive files are automatically excluded from git commits:
+
+- ✅ **Cache files** (`~/.mcp_oci_opsi_cache.json`) - Contains database OCIDs, names, compartments
+- ✅ **Tenancy reports** (`~/.mcp_oci_opsi/tenancy_review_*.json`) - Complete inventory data
+- ✅ **Credentials** (`.env`, `*.pem`, `*.key`) - OCI API keys and configuration
+- ✅ **Logs** (`*.log`) - May contain OCIDs and infrastructure details
+- ✅ **Prompts** (`prompts/`) - User-specific, may contain database names
+- ✅ **Wallets** (`wallet*/`) - Database connection credentials
+
+### Cache Location
+
+Cache files are stored in your **home directory** (`~/`), outside the git repository:
+
+```
+~/.mcp_oci_opsi_cache.json          # Main cache file
+~/.mcp_oci_opsi/                     # Reports directory
+  └── tenancy_review_*.json          # Tenancy review reports
+```
+
+This ensures they are:
+- Never accidentally committed to git
+- User-specific and isolated
+- Easy to locate and manage
+
+### Best Practices
+
+1. ✅ Never commit cache files or reports
+2. ✅ Use environment variables for configuration (`.env` file)
+3. ✅ Keep OCI credentials in `~/.oci/config` (outside repo)
+4. ✅ Review changes before committing: `git diff --staged`
+5. ✅ Use example files for documentation (`.env.example`)
+
+📖 **See [SECURITY.md](SECURITY.md) for comprehensive security guidelines**
 
 ## Visualization & Charting 📊 NEW!
 
@@ -646,6 +696,30 @@ MIT
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Documentation
+
+### Getting Started
+- **[QUICK_START.md](QUICK_START.md)** - 5-minute setup guide
+- **[TENANCY_REVIEW_GUIDE.md](TENANCY_REVIEW_GUIDE.md)** - Complete guide to tenancy review and optimization
+- **[SETUP.md](SETUP.md)** - Detailed installation and configuration instructions
+
+### Features and Usage
+- **[CACHE_SYSTEM.md](CACHE_SYSTEM.md)** - Fast cache system for instant queries
+- **[DBA_DEMO_QUESTIONS.md](DBA_DEMO_QUESTIONS.md)** - 141 example questions you can ask
+- **[DEMO_SCRIPT.md](DEMO_SCRIPT.md)** - Demo flow and presentation guide
+- **[VISUALIZATION_EXAMPLES.md](VISUALIZATION_EXAMPLES.md)** - ASCII chart examples
+
+### Security and Privacy
+- **[SECURITY.md](SECURITY.md)** - ⚠️ **READ THIS**: Security guidelines and protected files
+- **[.gitignore](.gitignore)** - Protected files list (cache, credentials, logs)
+
+### Scripts
+- **[scripts/README.md](scripts/README.md)** - Guide to setup and maintenance scripts
+
+### Integration Guides
+- **[ORACLE_DATABASE_INTEGRATION.md](ORACLE_DATABASE_INTEGRATION.md)** - Direct database query integration
+- **[PROFILE_MANAGEMENT.md](PROFILE_MANAGEMENT.md)** - Managing multiple OCI profiles
 
 ## Resources
 

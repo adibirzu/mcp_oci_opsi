@@ -53,15 +53,37 @@ sqlnet.ora
 .mcp_oci_opsi_cache.json
 *_cache.json
 cache/
+*.cache
+
+# Tenancy review reports - contain sensitive tenant/compartment/database info
+tenancy_review_*.json
+inventory_report_*.json
+review_*.json
+*_review.json
+
+# Setup and build logs - may contain sensitive OCIDs
+setup.log
+cache_build.log
+tenancy_review.log
+*.log
 
 # User-specific configuration - NEVER COMMIT
 claude_desktop_config.json
 mcp_config.json
+*_config.json
+config.local.*
 
 # Local development files with real OCIDs
 build_cache.py.local
 *_local.py
 local_config.py
+local_*.py
+test_local*.py
+
+# Claude Code prompts - user-specific, may contain sensitive data
+prompts/
+.prompts/
+custom_prompts/
 
 # OS
 .DS_Store
