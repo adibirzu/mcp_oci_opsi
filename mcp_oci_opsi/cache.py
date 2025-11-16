@@ -259,6 +259,44 @@ class DatabaseCache:
         """
         return self.cache_data["databases"].get(db_id)
 
+    def get_database_region(self, database_name_or_insight_id: str) -> Optional[str]:
+        """
+        Get the region for a database from cache.
+
+        This method supports automatic region detection for multi-region deployments.
+        It searches the cache by either database name or database insight OCID and
+        returns the region where that database is located.
+
+        Args:
+            database_name_or_insight_id: Database name (e.g., "PayDB") or
+                                        database insight OCID (e.g., "ocid1.opsidatabaseinsight...")
+
+        Returns:
+            Region name (e.g., "us-phoenix-1") or None if database not found or no region info
+
+        Example:
+            >>> cache = DatabaseCache()
+            >>> cache.load()
+            >>> region = cache.get_database_region("PayDB")
+            >>> print(region)  # Output: "us-phoenix-1"
+        """
+        # Search by OCID first (exact match)
+        if database_name_or_insight_id in self.cache_data["databases"]:
+            db_info = self.cache_data["databases"][database_name_or_insight_id]
+            return db_info.get("region")
+
+        # Search by name (case-insensitive)
+        for db_id, db_info in self.cache_data["databases"].items():
+            if isinstance(db_info, dict):
+                db_name = db_info.get("database_name", "")
+                db_display_name = db_info.get("database_display_name", "")
+
+                if (db_name and db_name.lower() == database_name_or_insight_id.lower()) or \
+                   (db_display_name and db_display_name.lower() == database_name_or_insight_id.lower()):
+                    return db_info.get("region")
+
+        return None
+
     def get_statistics(self) -> Dict[str, Any]:
         """
         Get cache statistics.
@@ -303,6 +341,18 @@ class DatabaseCache:
             return age_hours < max_age_hours
         except Exception:
             return False
+
+    def is_valid(self, max_age_hours: int = 24) -> bool:
+        """
+        Check if cache is valid (convenience wrapper for is_cache_valid).
+
+        Args:
+            max_age_hours: Maximum cache age in hours
+
+        Returns:
+            bool: True if cache is valid, False if expired or missing
+        """
+        return self.is_cache_valid(max_age_hours)
 
 
 # Global cache instance

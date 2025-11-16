@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any
 
-from .oci_clients import get_opsi_client
+from .oci_clients import get_opsi_client, extract_region_from_ocid, get_ocid_resource_type
 
 
 def list_database_insights(
@@ -88,6 +88,7 @@ def list_database_insights(
 def query_warehouse_standard(
     compartment_id: str,
     statement: str,
+    region: str | None = None,
 ) -> dict[str, Any]:
     """
     Execute a standard SQL query against the Operations Insights warehouse.
@@ -95,9 +96,15 @@ def query_warehouse_standard(
     This tool allows querying OPSI data warehouse using SQL-like syntax to analyze
     database performance metrics, resource utilization, and SQL statistics.
 
+    IMPORTANT: Operations Insights warehouse data is regional. If your query filters
+    by specific database OCIDs, you may need to specify the region parameter to query
+    the correct regional warehouse.
+
     Args:
         compartment_id: Compartment OCID for the query scope.
         statement: SQL query statement to execute against the warehouse.
+        region: Optional region override. Use this if querying databases in a specific region.
+               Example: "us-phoenix-1", "uk-london-1"
 
     Returns:
         Dictionary containing query results with columns and rows.
@@ -110,12 +117,32 @@ def query_warehouse_standard(
         >>> for row in result['rows']:
         ...     print(row)
 
+        >>> # Query for a database in a specific region
+        >>> result = query_warehouse_standard(
+        ...     compartment_id="ocid1.compartment.oc1..aaaaaa...",
+        ...     statement="SELECT * FROM database_sql_statistics WHERE database_id = 'ocid1.opsidatabaseinsight.oc1.phx.aaa...'",
+        ...     region="us-phoenix-1"
+        ... )
+
     Note:
         The query capabilities depend on your OCI OPSI warehouse configuration
-        and the OPSI schema available in your tenancy.
+        and the OPSI schema available in your tenancy. If querying specific databases,
+        you may need to query the database's home region.
     """
     try:
-        client = get_opsi_client()
+        # Try to detect region from database_id in the SQL statement
+        if not region and "database_id = " in statement:
+            # Extract OCID from statement (simple pattern matching)
+            import re
+            ocid_pattern = r"ocid1\.[a-zA-Z0-9]+\.oc1\.[a-z0-9]+\.[a-zA-Z0-9]+"
+            match = re.search(ocid_pattern, statement)
+            if match:
+                ocid = match.group(0)
+                region = extract_region_from_ocid(ocid)
+                if region:
+                    print(f"Detected database region from query: {region}")
+
+        client = get_opsi_client(region=region)
 
         # Try using the SDK method if available (newer SDK versions)
         try:
@@ -194,11 +221,37 @@ def query_warehouse_standard(
                 }
 
     except Exception as e:
-        return {
-            "error": str(e),
+        error_msg = str(e)
+        error_result = {
+            "error": error_msg,
             "type": type(e).__name__,
             "query": statement,
         }
+
+        # Add troubleshooting guidance
+        if "NotAuthorizedOrNotFound" in error_msg or "404" in error_msg:
+            error_result["troubleshooting"] = {
+                "possible_causes": [
+                    "OPSI warehouse not configured in this region",
+                    "Database being queried is in a different region",
+                    "Missing IAM permissions for OPSI data objects",
+                    "Invalid table or column names in query"
+                ],
+                "required_permissions": [
+                    "Allow group <YourGroup> to read opsi-data-objects in compartment",
+                    "Allow group <YourGroup> to use operations-insights-warehouse in compartment"
+                ],
+                "next_steps": [
+                    "If querying a specific database, specify its region explicitly",
+                    "Verify Operations Insights warehouse is enabled in the target region",
+                    "Check IAM policies for warehouse access"
+                ]
+            }
+
+            if region:
+                error_result["queried_region"] = region
+
+        return error_result
 
 
 def list_sql_texts(
@@ -214,11 +267,16 @@ def list_sql_texts(
     Retrieves SQL text data for database SQL statements within a time range,
     useful for SQL performance analysis and tuning.
 
+    IMPORTANT: Operations Insights is regional. If querying a specific database,
+    this function automatically detects the database region and queries the correct
+    regional endpoint.
+
     Args:
         compartment_id: Compartment OCID to query.
         time_start: Start time in ISO format (e.g., "2024-01-01T00:00:00Z").
         time_end: End time in ISO format (e.g., "2024-01-31T23:59:59Z").
-        database_id: Optional database OCID to filter results.
+        database_id: Optional database insight OCID to filter results.
+                    Region will be automatically detected from this OCID.
         sql_identifier: Optional SQL identifier to retrieve specific SQL text.
 
     Returns:
@@ -229,13 +287,68 @@ def list_sql_texts(
         ...     compartment_id="ocid1.compartment.oc1..aaaaaa...",
         ...     time_start="2024-01-01T00:00:00Z",
         ...     time_end="2024-01-07T23:59:59Z",
-        ...     database_id="ocid1.database.oc1..bbbbb..."
+        ...     database_id="ocid1.opsidatabaseinsight.oc1.phx.bbbbb..."
         ... )
         >>> for sql in result['items']:
         ...     print(f"SQL ID: {sql['sql_identifier']}, Executions: {sql['executions']}")
+
+    Note:
+        If you get 404 errors, ensure:
+        1. The database has Operations Insights enabled
+        2. You have required IAM permissions for SQL statistics
+        3. SQL Watch is enabled on the database (for ADW/ATP)
     """
     try:
-        client = get_opsi_client()
+        # Validate OCID type if database_id provided
+        if database_id:
+            resource_type = get_ocid_resource_type(database_id)
+
+            # Check if user provided wrong OCID type
+            if resource_type and resource_type not in ["opsidatabaseinsight", "databaseinsight"]:
+                return {
+                    "error": f"Invalid OCID type: '{resource_type}'",
+                    "provided_ocid": database_id,
+                    "troubleshooting": {
+                        "issue": f"You provided a '{resource_type}' OCID, but this function requires a 'database insight' OCID",
+                        "explanation": [
+                            "Operations Insights uses 'database insight' OCIDs, not database OCIDs",
+                            "Database insight OCID format: ocid1.opsidatabaseinsight.oc1.<region>...",
+                            f"You provided: ocid1.{resource_type}.oc1.<region>..."
+                        ],
+                        "solution": {
+                            "method_1": "Use get_fleet_summary() or search_databases() from cache to find the database insight OCID",
+                            "method_2": "Use list_database_insights() to list all insights in your compartment",
+                            "method_3": "Ask: 'What is the database insight OCID for PayDB?' (I'll look it up in cache)"
+                        },
+                        "example": {
+                            "wrong_ocid": "ocid1.autonomousdatabase.oc1.phx.xxx (Autonomous Database OCID)",
+                            "correct_ocid": "ocid1.opsidatabaseinsight.oc1.phx.yyy (Database Insight OCID)"
+                        }
+                    }
+                }
+
+        # Detect region from database_id if provided
+        region = None
+        if database_id:
+            # Method 1: Extract from OCID
+            region = extract_region_from_ocid(database_id)
+            if region:
+                print(f"Detected region from OCID: {region}")
+
+            # Method 2: Lookup in cache if OCID extraction fails
+            if not region:
+                try:
+                    from mcp_oci_opsi.cache import DatabaseCache
+                    cache = DatabaseCache()
+                    if cache.load() and cache.is_valid():
+                        region = cache.get_database_region(database_id)
+                        if region:
+                            print(f"Detected region from cache: {region}")
+                except Exception:
+                    pass  # Cache lookup failed, continue without region
+
+        # Create region-aware client
+        client = get_opsi_client(region=region)
 
         # Convert time strings to datetime objects for API
         time_interval_start = datetime.fromisoformat(time_start.replace("Z", "+00:00"))
@@ -254,10 +367,7 @@ def list_sql_texts(
 
         # Try to use summarize_sql_statistics (most common method)
         try:
-            response = client.summarize_sql_statistics(
-                compartment_id=compartment_id,
-                **kwargs,
-            )
+            response = client.summarize_sql_statistics(**kwargs)
 
             items = []
             if hasattr(response.data, "items"):
@@ -286,10 +396,7 @@ def list_sql_texts(
         except AttributeError:
             # Try alternative method: list_sql_texts if available
             try:
-                response = client.list_sql_texts(
-                    compartment_id=compartment_id,
-                    **kwargs,
-                )
+                response = client.list_sql_texts(**kwargs)
 
                 items = []
                 if hasattr(response.data, "items"):
@@ -355,10 +462,45 @@ def list_sql_texts(
                 }
 
     except Exception as e:
-        return {
-            "error": str(e),
+        error_msg = str(e)
+        error_result = {
+            "error": error_msg,
             "type": type(e).__name__,
             "compartment_id": compartment_id,
             "time_start": time_start,
             "time_end": time_end,
         }
+
+        # Add troubleshooting guidance for common errors
+        if "NotAuthorizedOrNotFound" in error_msg or "404" in error_msg:
+            error_result["troubleshooting"] = {
+                "possible_causes": [
+                    "Database does not have Operations Insights enabled",
+                    "SQL Watch may not be enabled (required for ADW/ATP databases)",
+                    "Missing IAM permissions for SQL statistics",
+                    "Database insight ID is incorrect",
+                    "Regional mismatch - database may be in different region"
+                ],
+                "required_permissions": [
+                    "Allow group <YourGroup> to read sql-statistics in compartment",
+                    "Allow group <YourGroup> to read opsi-data-objects in compartment",
+                    "Allow group <YourGroup> to use operations-insights-warehouse in compartment"
+                ],
+                "next_steps": [
+                    "For Autonomous Databases: Enable SQL Watch first (use enable_sqlwatch tool)",
+                    "Verify database has Operations Insights enabled",
+                    "Check IAM policies in the database compartment",
+                    "Confirm the database_id OCID is correct"
+                ]
+            }
+
+            if database_id:
+                detected_region = extract_region_from_ocid(database_id)
+                if detected_region:
+                    error_result["detected_database_region"] = detected_region
+                    error_result["troubleshooting"]["regional_note"] = (
+                        f"Database appears to be in {detected_region} region. "
+                        "The client has been configured for this region automatically."
+                    )
+
+        return error_result

@@ -2,7 +2,7 @@
 
 from typing import Any, Optional
 
-from .oci_clients import get_dbm_client, list_all
+from .oci_clients import get_dbm_client, list_all, extract_region_from_ocid
 
 
 def list_managed_databases(
@@ -69,6 +69,9 @@ def get_managed_database(database_id: str) -> dict[str, Any]:
     """
     Get detailed information about a specific managed database.
 
+    Database Management is regional - this function automatically detects
+    the database region from the OCID and queries the correct endpoint.
+
     Args:
         database_id: Managed Database OCID.
 
@@ -76,12 +79,17 @@ def get_managed_database(database_id: str) -> dict[str, Any]:
         Dictionary containing detailed managed database information.
     """
     try:
-        client = get_dbm_client()
+        # Detect region from database OCID
+        region = extract_region_from_ocid(database_id)
+        if region:
+            print(f"Detected database region: {region}")
+
+        client = get_dbm_client(region=region)
 
         response = client.get_managed_database(managed_database_id=database_id)
         db = response.data
 
-        return {
+        result = {
             "id": db.id,
             "name": db.name,
             "compartment_id": db.compartment_id,
@@ -98,12 +106,43 @@ def get_managed_database(database_id: str) -> dict[str, Any]:
             "additional_details": getattr(db, "additional_details", {}),
         }
 
+        if region:
+            result["detected_region"] = region
+
+        return result
+
     except Exception as e:
-        return {
-            "error": str(e),
+        error_msg = str(e)
+        error_result = {
+            "error": error_msg,
             "type": type(e).__name__,
             "database_id": database_id,
         }
+
+        if "NotAuthorizedOrNotFound" in error_msg or "404" in error_msg:
+            error_result["troubleshooting"] = {
+                "possible_causes": [
+                    "Database Management not enabled for this database",
+                    "Missing IAM permissions for Database Management",
+                    "Database OCID is incorrect",
+                    "Regional mismatch"
+                ],
+                "required_permissions": [
+                    "Allow group <YourGroup> to read database-family in compartment",
+                    "Allow group <YourGroup> to use database-management-family in compartment"
+                ],
+                "next_steps": [
+                    "Verify Database Management is enabled for the database",
+                    "Check IAM policies",
+                    "Confirm the OCID is correct"
+                ]
+            }
+
+            detected_region = extract_region_from_ocid(database_id)
+            if detected_region:
+                error_result["detected_database_region"] = detected_region
+
+        return error_result
 
 
 def get_tablespace_usage(

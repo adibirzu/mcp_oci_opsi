@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any, Optional
 
-from .oci_clients import get_opsi_client, list_all
+from .oci_clients import get_opsi_client, list_all, extract_region_from_ocid, get_ocid_resource_type
 
 
 def list_host_insights(
@@ -76,17 +76,77 @@ def summarize_sql_statistics(
     Provides aggregated SQL performance metrics including executions, CPU time,
     elapsed time, and other key performance indicators.
 
+    IMPORTANT: Operations Insights is regional. If querying a specific database,
+    this function automatically detects the database region and queries the correct
+    regional endpoint.
+
     Args:
         compartment_id: Compartment OCID to query.
         time_interval_start: Start time in ISO format (e.g., "2024-01-01T00:00:00Z").
         time_interval_end: End time in ISO format (e.g., "2024-01-31T23:59:59Z").
-        database_id: Optional database OCID to filter results.
+        database_id: Optional database insight OCID to filter results.
+                    Region will be automatically detected from this OCID.
 
     Returns:
         Dictionary containing SQL statistics summary.
+
+    Note:
+        If you get 404 errors, ensure:
+        1. The database has Operations Insights enabled
+        2. You have required IAM permissions for SQL statistics
+        3. The database is in the expected region
     """
     try:
-        client = get_opsi_client()
+        # Validate OCID type if database_id provided
+        if database_id:
+            resource_type = get_ocid_resource_type(database_id)
+
+            # Check if user provided wrong OCID type
+            if resource_type and resource_type not in ["opsidatabaseinsight", "databaseinsight"]:
+                return {
+                    "error": f"Invalid OCID type: '{resource_type}'",
+                    "provided_ocid": database_id,
+                    "troubleshooting": {
+                        "issue": f"You provided a '{resource_type}' OCID, but this function requires a 'database insight' OCID",
+                        "explanation": [
+                            "Operations Insights uses 'database insight' OCIDs, not database OCIDs",
+                            "Database insight OCID format: ocid1.opsidatabaseinsight.oc1.<region>...",
+                            f"You provided: ocid1.{resource_type}.oc1.<region>..."
+                        ],
+                        "solution": {
+                            "method_1": "Use get_fleet_summary() or search_databases() to find the database insight OCID",
+                            "method_2": "Use list_database_insights() to list all insights in your compartment",
+                            "method_3": "In OCI Console: Operations Insights → Database Insights → Copy the Insight OCID (not Database OCID)"
+                        },
+                        "example": {
+                            "wrong_ocid": "ocid1.autonomousdatabase.oc1.phx.xxx (Database OCID)",
+                            "correct_ocid": "ocid1.opsidatabaseinsight.oc1.phx.yyy (Database Insight OCID)"
+                        }
+                    }
+                }
+
+        # Detect region from database_id if provided
+        region = None
+        if database_id:
+            # Method 1: Extract from OCID
+            region = extract_region_from_ocid(database_id)
+            if region:
+                print(f"Detected region from OCID: {region}")
+
+            # Method 2: Lookup in cache if OCID extraction fails
+            if not region:
+                try:
+                    from mcp_oci_opsi.cache import DatabaseCache
+                    cache = DatabaseCache()
+                    if cache.load() and cache.is_valid():
+                        region = cache.get_database_region(database_id)
+                        if region:
+                            print(f"Detected region from cache: {region}")
+                except Exception:
+                    pass  # Cache lookup failed, continue without region
+
+        # Create region-aware client
+        client = get_opsi_client(region=region)
 
         # Convert time strings to datetime objects
         time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
@@ -120,7 +180,7 @@ def summarize_sql_statistics(
                     "rows_processed": getattr(item, "rows_processed", None),
                 })
 
-        return {
+        result = {
             "compartment_id": compartment_id,
             "time_interval_start": time_interval_start,
             "time_interval_end": time_interval_end,
@@ -128,12 +188,45 @@ def summarize_sql_statistics(
             "count": len(items),
         }
 
+        if region:
+            result["detected_region"] = region
+
+        return result
+
     except Exception as e:
-        return {
-            "error": str(e),
+        error_msg = str(e)
+        error_result = {
+            "error": error_msg,
             "type": type(e).__name__,
             "compartment_id": compartment_id,
         }
+
+        # Add troubleshooting guidance for common errors
+        if "NotAuthorizedOrNotFound" in error_msg or "404" in error_msg:
+            error_result["troubleshooting"] = {
+                "possible_causes": [
+                    "Database does not have Operations Insights enabled",
+                    "Missing IAM permissions for SQL statistics",
+                    "Database insight ID is incorrect",
+                    "Regional mismatch - database may be in different region"
+                ],
+                "required_permissions": [
+                    "Allow group <YourGroup> to read sql-statistics in compartment",
+                    "Allow group <YourGroup> to read opsi-data-objects in compartment"
+                ],
+                "next_steps": [
+                    "Verify database has Operations Insights enabled",
+                    "Check IAM policies in the database compartment",
+                    "Confirm the database_id OCID is correct"
+                ]
+            }
+
+            if database_id:
+                detected_region = extract_region_from_ocid(database_id)
+                if detected_region:
+                    error_result["detected_database_region"] = detected_region
+
+        return error_result
 
 
 def get_sql_plan(
