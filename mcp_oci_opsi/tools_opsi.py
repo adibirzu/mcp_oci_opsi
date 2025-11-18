@@ -56,6 +56,7 @@ def list_database_insights(
                 "database_display_name": getattr(db_insight, "database_display_name", None),
                 "database_type": db_insight.database_type,
                 "database_version": getattr(db_insight, "database_version", None),
+                "entity_source": getattr(db_insight, "entity_source", None),
                 "processor_count": getattr(db_insight, "processor_count", None),
                 "status": db_insight.status,
                 "lifecycle_state": db_insight.lifecycle_state,

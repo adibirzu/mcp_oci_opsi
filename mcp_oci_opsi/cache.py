@@ -354,6 +354,171 @@ class DatabaseCache:
         """
         return self.is_cache_valid(max_age_hours)
 
+    def build_cache_with_profile(
+        self, compartment_ids: List[str], profile: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Build cache with specific OCI CLI profile for multi-tenancy support.
+
+        This method allows building cache for different tenancies by specifying
+        the OCI CLI profile name.
+
+        Args:
+            compartment_ids: List of root compartment OCIDs to scan
+            profile: OCI CLI profile name (e.g., "tenancy1", "tenancy2")
+                    If None, uses current/default profile
+
+        Returns:
+            Dict with build results and statistics including:
+            - cache_built: Boolean success indicator
+            - profile_used: Profile name that was used
+            - tenancy_name: Name of the tenancy
+            - last_updated: Timestamp of cache build
+            - compartments_scanned: Number of compartments scanned
+            - statistics: Database and host counts
+
+        Example:
+            >>> cache = DatabaseCache()
+            >>> # Build cache for tenancy1
+            >>> result = cache.build_cache_with_profile(
+            ...     compartment_ids=["ocid1.compartment.oc1..aaa"],
+            ...     profile="tenancy1"
+            ... )
+            >>> print(f"Built cache for {result['tenancy_name']}")
+        """
+        # Set profile if specified
+        old_profile = None
+        if profile:
+            old_profile = os.environ.get("OCI_CLI_PROFILE")
+            os.environ["OCI_CLI_PROFILE"] = profile
+
+        try:
+            config = get_oci_config()
+            opsi_client = get_opsi_client()
+            identity_client = oci.identity.IdentityClient(config)
+
+            # Get tenancy information
+            tenancy = identity_client.get_tenancy(config["tenancy"]).data
+
+            # Update metadata
+            self.cache_data["metadata"]["last_updated"] = datetime.utcnow().isoformat() + "Z"
+            self.cache_data["metadata"]["profile"] = profile or os.getenv("OCI_CLI_PROFILE", "DEFAULT")
+            self.cache_data["metadata"]["region"] = config.get("region")
+            self.cache_data["metadata"]["tenancy_name"] = tenancy.name
+            self.cache_data["metadata"]["tenancy_id"] = config["tenancy"]
+
+            # Clear existing data
+            self.cache_data["compartments"] = {}
+            self.cache_data["databases"] = {}
+            self.cache_data["hosts"] = {}
+
+            # Scan each compartment and its children
+            all_compartments = set()
+            for root_compartment_id in compartment_ids:
+                # Get the root compartment
+                all_compartments.add(root_compartment_id)
+
+                # Get all child compartments recursively
+                try:
+                    child_compartments = list_all(
+                        identity_client.list_compartments,
+                        compartment_id=root_compartment_id,
+                        compartment_id_in_subtree=True,
+                    )
+                    for comp in child_compartments:
+                        if comp.lifecycle_state == "ACTIVE":
+                            all_compartments.add(comp.id)
+                            # Store compartment info
+                            self.cache_data["compartments"][comp.id] = {
+                                "id": comp.id,
+                                "name": comp.name,
+                                "description": comp.description,
+                                "parent_id": root_compartment_id,
+                            }
+                except Exception:
+                    pass
+
+            # Scan database insights in all compartments
+            for compartment_id in all_compartments:
+                try:
+                    db_insights = list_all(
+                        opsi_client.list_database_insights,
+                        compartment_id=compartment_id,
+                    )
+
+                    for db in db_insights:
+                        if db.lifecycle_state == "ACTIVE":
+                            db_id = db.id
+                            self.cache_data["databases"][db_id] = {
+                                "id": db_id,
+                                "database_id": getattr(db, "database_id", None),
+                                "database_name": getattr(db, "database_name", None),
+                                "database_display_name": getattr(db, "database_display_name", None),
+                                "database_type": getattr(db, "database_type", None),
+                                "database_version": getattr(db, "database_version", None),
+                                "entity_source": getattr(db, "entity_source", None),
+                                "compartment_id": compartment_id,
+                                "compartment_name": self.cache_data["compartments"].get(
+                                    compartment_id, {}
+                                ).get("name", "Unknown"),
+                                "status": db.status,
+                                "lifecycle_state": db.lifecycle_state,
+                            }
+                except Exception:
+                    pass
+
+            # Scan host insights in all compartments
+            for compartment_id in all_compartments:
+                try:
+                    host_insights = list_all(
+                        opsi_client.list_host_insights,
+                        compartment_id=compartment_id,
+                    )
+
+                    for host in host_insights:
+                        if host.lifecycle_state == "ACTIVE":
+                            host_id = host.id
+                            self.cache_data["hosts"][host_id] = {
+                                "id": host_id,
+                                "host_name": getattr(host, "host_name", None),
+                                "host_display_name": getattr(host, "host_display_name", None),
+                                "host_type": getattr(host, "host_type", None),
+                                "platform_type": getattr(host, "platform_type", None),
+                                "entity_source": getattr(host, "entity_source", None),
+                                "compartment_id": compartment_id,
+                                "compartment_name": self.cache_data["compartments"].get(
+                                    compartment_id, {}
+                                ).get("name", "Unknown"),
+                                "status": host.status,
+                                "lifecycle_state": host.lifecycle_state,
+                            }
+                except Exception:
+                    pass
+
+            # Calculate statistics
+            self._calculate_statistics()
+
+            # Save to file
+            self.save()
+
+            return {
+                "cache_built": True,
+                "profile_used": profile or "DEFAULT",
+                "tenancy_name": tenancy.name,
+                "tenancy_id": config["tenancy"],
+                "region": config.get("region"),
+                "last_updated": self.cache_data["metadata"]["last_updated"],
+                "compartments_scanned": len(all_compartments),
+                "statistics": self.cache_data["statistics"],
+            }
+
+        finally:
+            # Restore original profile
+            if profile and old_profile:
+                os.environ["OCI_CLI_PROFILE"] = old_profile
+            elif profile:
+                os.environ.pop("OCI_CLI_PROFILE", None)
+
 
 # Global cache instance
 _cache = DatabaseCache()
