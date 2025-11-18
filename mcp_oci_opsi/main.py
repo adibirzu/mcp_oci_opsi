@@ -18,6 +18,10 @@ from . import tools_database_registration
 from . import tools_oracle_database
 from . import tools_cache
 from . import tools_visualization
+# Enhanced multi-profile and advanced analytics tools
+from . import tools_profile_management
+from . import tools_dbmanagement_sql_plans
+from . import tools_opsi_sql_insights
 
 # Initialize FastMCP application
 app = FastMCP("oci-opsi")
@@ -1461,6 +1465,411 @@ def get_oracle_session_info(connection_string: str) -> dict:
         Dictionary containing session details.
     """
     return tools_oracle_database.get_session_info(connection_string)
+
+
+# ============================================================================
+# Enhanced Profile Management Tools (Multi-Tenancy Support)
+# ============================================================================
+
+
+@app.tool()
+def list_oci_profiles_enhanced() -> dict:
+    """
+    List all OCI profiles with comprehensive configuration details and validation status.
+
+    Enhanced version with detailed profile information, validation, and multi-tenancy support.
+
+    Returns:
+        Dictionary containing profile count, current profile, and detailed profile list.
+    """
+    return tools_profile_management.list_oci_profiles_enhanced()
+
+
+@app.tool()
+def get_oci_profile_details(profile: str) -> dict:
+    """
+    Get comprehensive configuration details for a specific OCI profile.
+
+    Args:
+        profile: Profile name to query.
+
+    Returns:
+        Dictionary with profile configuration, validation status, and tenancy info.
+    """
+    return tools_profile_management.get_oci_profile_details(profile)
+
+
+@app.tool()
+def validate_oci_profile(profile: str) -> dict:
+    """
+    Validate that an OCI profile exists and is properly configured.
+
+    Args:
+        profile: Profile name to validate.
+
+    Returns:
+        Dictionary with validation results and any error messages.
+    """
+    return tools_profile_management.validate_oci_profile(profile)
+
+
+@app.tool()
+def get_profile_tenancy_details(profile: Optional[str] = None) -> dict:
+    """
+    Get tenancy information for a specific profile.
+
+    Args:
+        profile: Profile name. If None, uses current active profile.
+
+    Returns:
+        Dictionary with tenancy OCID, name, region, and user details.
+    """
+    return tools_profile_management.get_profile_tenancy_details(profile)
+
+
+@app.tool()
+def compare_oci_profiles(profiles: list[str]) -> dict:
+    """
+    Compare multiple OCI profiles side-by-side.
+
+    Args:
+        profiles: List of profile names to compare.
+
+    Returns:
+        Dictionary with comparison data for all profiles.
+    """
+    return tools_profile_management.compare_oci_profiles(profiles)
+
+
+@app.tool()
+def refresh_profile_cache() -> dict:
+    """
+    Refresh the profile configuration cache.
+
+    Forces reload of all profile configurations from disk.
+
+    Returns:
+        Dictionary with success status.
+    """
+    return tools_profile_management.refresh_profile_cache()
+
+
+@app.tool()
+def get_current_profile_info() -> dict:
+    """
+    Get information about the currently active OCI profile.
+
+    Returns:
+        Dictionary with current profile details and tenancy information.
+    """
+    return tools_profile_management.get_current_profile_info()
+
+
+# ============================================================================
+# SQL Plan Baseline Management Tools
+# ============================================================================
+
+
+@app.tool()
+def list_sql_plan_baselines(
+    database_id: str,
+    profile: Optional[str] = None,
+    plan_name: Optional[str] = None,
+    is_enabled: Optional[bool] = None,
+    is_accepted: Optional[bool] = None,
+) -> dict:
+    """
+    List SQL Plan Baselines for a managed database.
+
+    Args:
+        database_id: Managed Database OCID.
+        profile: OCI profile name for multi-tenancy support.
+        plan_name: Filter by plan name (optional).
+        is_enabled: Filter by enabled status (optional).
+        is_accepted: Filter by accepted status (optional).
+
+    Returns:
+        Dictionary with list of SQL plan baselines.
+    """
+    return tools_dbmanagement_sql_plans.list_sql_plan_baselines(
+        database_id=database_id,
+        profile=profile,
+        plan_name=plan_name,
+        is_enabled=is_enabled,
+        is_accepted=is_accepted,
+    )
+
+
+@app.tool()
+def get_sql_plan_baseline(
+    database_id: str,
+    plan_name: str,
+    profile: Optional[str] = None,
+) -> dict:
+    """
+    Get detailed information about a specific SQL Plan Baseline.
+
+    Args:
+        database_id: Managed Database OCID.
+        plan_name: Name of the SQL plan baseline.
+        profile: OCI profile name for multi-tenancy support.
+
+    Returns:
+        Dictionary with detailed baseline information.
+    """
+    return tools_dbmanagement_sql_plans.get_sql_plan_baseline(
+        database_id=database_id,
+        plan_name=plan_name,
+        profile=profile,
+    )
+
+
+@app.tool()
+def load_sql_plan_baselines_from_awr(
+    database_id: str,
+    profile: Optional[str] = None,
+    sql_handle: Optional[str] = None,
+    sql_text: Optional[str] = None,
+    begin_snapshot: Optional[int] = None,
+    end_snapshot: Optional[int] = None,
+) -> dict:
+    """
+    Load SQL Plan Baselines from AWR snapshots.
+
+    Args:
+        database_id: Managed Database OCID.
+        profile: OCI profile name for multi-tenancy support.
+        sql_handle: Specific SQL handle to load (optional).
+        sql_text: SQL text filter (optional).
+        begin_snapshot: Beginning AWR snapshot ID (optional).
+        end_snapshot: Ending AWR snapshot ID (optional).
+
+    Returns:
+        Dictionary with work request ID for tracking.
+    """
+    return tools_dbmanagement_sql_plans.load_sql_plan_baselines_from_awr(
+        database_id=database_id,
+        profile=profile,
+        sql_handle=sql_handle,
+        sql_text=sql_text,
+        begin_snapshot=begin_snapshot,
+        end_snapshot=end_snapshot,
+    )
+
+
+@app.tool()
+def drop_sql_plan_baselines(
+    database_id: str,
+    profile: Optional[str] = None,
+    plan_name: Optional[str] = None,
+    sql_handle: Optional[str] = None,
+) -> dict:
+    """
+    Drop (delete) SQL Plan Baselines from a managed database.
+
+    Args:
+        database_id: Managed Database OCID.
+        profile: OCI profile name for multi-tenancy support.
+        plan_name: Name of specific plan baseline to drop.
+        sql_handle: SQL handle (drops all baselines for this SQL).
+
+    Returns:
+        Dictionary with operation result.
+    """
+    return tools_dbmanagement_sql_plans.drop_sql_plan_baselines(
+        database_id=database_id,
+        profile=profile,
+        plan_name=plan_name,
+        sql_handle=sql_handle,
+    )
+
+
+@app.tool()
+def enable_automatic_spm_evolve_task(
+    database_id: str,
+    profile: Optional[str] = None,
+) -> dict:
+    """
+    Enable the automatic SQL Plan Management (SPM) evolve advisor task.
+
+    Args:
+        database_id: Managed Database OCID.
+        profile: OCI profile name for multi-tenancy support.
+
+    Returns:
+        Dictionary with operation result.
+    """
+    return tools_dbmanagement_sql_plans.enable_automatic_spm_evolve_task(
+        database_id=database_id,
+        profile=profile,
+    )
+
+
+@app.tool()
+def configure_automatic_spm_capture(
+    database_id: str,
+    enabled: bool,
+    profile: Optional[str] = None,
+    auto_filter_sql_text: Optional[str] = None,
+    auto_filter_parsing_schema: Optional[str] = None,
+) -> dict:
+    """
+    Configure automatic SQL Plan Management baseline capture.
+
+    Args:
+        database_id: Managed Database OCID.
+        enabled: Whether to enable or disable automatic capture.
+        profile: OCI profile name for multi-tenancy support.
+        auto_filter_sql_text: Filter to capture only matching SQL text.
+        auto_filter_parsing_schema: Filter to capture only from specific schemas.
+
+    Returns:
+        Dictionary with operation result.
+    """
+    return tools_dbmanagement_sql_plans.configure_automatic_spm_capture(
+        database_id=database_id,
+        enabled=enabled,
+        profile=profile,
+        auto_filter_sql_text=auto_filter_sql_text,
+        auto_filter_parsing_schema=auto_filter_parsing_schema,
+    )
+
+
+# ============================================================================
+# SQL Insights and Advanced Analytics Tools
+# ============================================================================
+
+
+@app.tool()
+def summarize_sql_insights(
+    compartment_id: str,
+    profile: Optional[str] = None,
+    database_id: Optional[list[str]] = None,
+    time_interval_start: Optional[str] = None,
+    time_interval_end: Optional[str] = None,
+    database_time_pct_greater_than: Optional[float] = None,
+) -> dict:
+    """
+    Get SQL performance insights with anomaly detection.
+
+    Analyzes SQL statements consuming significant database time and identifies
+    performance anomalies, trends, and outliers.
+
+    Args:
+        compartment_id: Compartment OCID.
+        profile: OCI profile name for multi-tenancy support.
+        database_id: List of database insight OCIDs to analyze (optional).
+        time_interval_start: Start time in ISO 8601 format (optional).
+        time_interval_end: End time in ISO 8601 format (optional).
+        database_time_pct_greater_than: Filter to SQL consuming more than this % of DB time.
+
+    Returns:
+        Dictionary with SQL insights and performance analysis.
+    """
+    return tools_opsi_sql_insights.summarize_sql_insights(
+        compartment_id=compartment_id,
+        profile=profile,
+        database_id=database_id,
+        time_interval_start=time_interval_start,
+        time_interval_end=time_interval_end,
+        database_time_pct_greater_than=database_time_pct_greater_than,
+    )
+
+
+@app.tool()
+def summarize_sql_plan_insights(
+    compartment_id: str,
+    sql_identifier: str,
+    profile: Optional[str] = None,
+    database_id: Optional[list[str]] = None,
+    time_interval_start: Optional[str] = None,
+    time_interval_end: Optional[str] = None,
+) -> dict:
+    """
+    Analyze execution plan performance for a specific SQL statement.
+
+    Args:
+        compartment_id: Compartment OCID.
+        sql_identifier: SQL identifier to analyze.
+        profile: OCI profile name for multi-tenancy support.
+        database_id: List of database insight OCIDs (optional).
+        time_interval_start: Start time in ISO 8601 format (optional).
+        time_interval_end: End time in ISO 8601 format (optional).
+
+    Returns:
+        Dictionary with plan insights and performance comparison.
+    """
+    return tools_opsi_sql_insights.summarize_sql_plan_insights(
+        compartment_id=compartment_id,
+        sql_identifier=sql_identifier,
+        profile=profile,
+        database_id=database_id,
+        time_interval_start=time_interval_start,
+        time_interval_end=time_interval_end,
+    )
+
+
+@app.tool()
+def summarize_addm_db_findings(
+    compartment_id: str,
+    profile: Optional[str] = None,
+    database_id: Optional[list[str]] = None,
+    time_interval_start: Optional[str] = None,
+    time_interval_end: Optional[str] = None,
+) -> dict:
+    """
+    Get consolidated ADDM (Automatic Database Diagnostic Monitor) findings.
+
+    Args:
+        compartment_id: Compartment OCID.
+        profile: OCI profile name for multi-tenancy support.
+        database_id: List of database insight OCIDs to analyze (optional).
+        time_interval_start: Start time in ISO 8601 format (optional).
+        time_interval_end: End time in ISO 8601 format (optional).
+
+    Returns:
+        Dictionary with ADDM findings and recommendations.
+    """
+    return tools_opsi_sql_insights.summarize_addm_db_findings(
+        compartment_id=compartment_id,
+        profile=profile,
+        database_id=database_id,
+        time_interval_start=time_interval_start,
+        time_interval_end=time_interval_end,
+    )
+
+
+@app.tool()
+def get_sql_insight_details(
+    compartment_id: str,
+    sql_identifier: str,
+    database_id: str,
+    profile: Optional[str] = None,
+    time_interval_start: Optional[str] = None,
+    time_interval_end: Optional[str] = None,
+) -> dict:
+    """
+    Get detailed insights for a specific SQL statement on a specific database.
+
+    Args:
+        compartment_id: Compartment OCID.
+        sql_identifier: SQL identifier to analyze.
+        database_id: Database insight OCID.
+        profile: OCI profile name for multi-tenancy support.
+        time_interval_start: Start time in ISO 8601 format (optional).
+        time_interval_end: End time in ISO 8601 format (optional).
+
+    Returns:
+        Dictionary with detailed SQL performance insights.
+    """
+    return tools_opsi_sql_insights.get_sql_insight_details(
+        compartment_id=compartment_id,
+        sql_identifier=sql_identifier,
+        database_id=database_id,
+        profile=profile,
+        time_interval_start=time_interval_start,
+        time_interval_end=time_interval_end,
+    )
 
 
 # ============================================================================

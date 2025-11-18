@@ -4,7 +4,23 @@ MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operat
 
 ## Features
 
-**Total: 58 MCP Tools for comprehensive OCI database operations**
+**Total: 75 MCP Tools for comprehensive OCI database operations**
+
+### 🆕 NEW: Enhanced Multi-Tenancy & Advanced Analytics
+- **Multi-Profile Support** - Dynamic profile switching without environment variable changes
+- **SQL Plan Baseline Management** - Full CRUD operations for SQL plan baselines
+- **Advanced SQL Insights** - SQL performance insights with anomaly detection
+- **ADDM Findings** - Consolidated ADDM findings across database fleet
+
+### Enhanced Profile Management Tools (11 tools) 🆕
+- **list_oci_profiles_enhanced()**: List all profiles with comprehensive validation
+- **get_oci_profile_details(profile)**: Get detailed profile configuration
+- **validate_oci_profile(profile)**: Validate profile setup
+- **get_profile_tenancy_details(profile)**: Get tenancy information
+- **compare_oci_profiles(profiles)**: Compare multiple profiles side-by-side
+- **refresh_profile_cache()**: Clear and refresh profile cache
+- **get_current_profile_info()**: Get current active profile details
+- *Plus 4 original utility tools (ping, whoami, list_oci_profiles, get_profile_info)*
 
 ### Utility & Configuration Tools (4)
 - **ping()**: Simple health check to verify the MCP server is responsive
@@ -33,6 +49,12 @@ MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operat
 - **list_exadata_insights()**: List Exadata infrastructure insights
 - **get_host_resource_statistics()**: Get detailed host resource utilization statistics
 
+### Advanced SQL Analytics & Insights (4 tools) 🆕
+- **summarize_sql_insights(compartment_id, profile, ...)**: SQL performance insights with anomaly detection
+- **summarize_sql_plan_insights(compartment_id, sql_identifier, profile)**: Execution plan performance analysis
+- **summarize_addm_db_findings(compartment_id, profile, ...)**: Consolidated ADDM findings
+- **get_sql_insight_details(compartment_id, sql_identifier, database_id, profile)**: Detailed SQL insights
+
 ### SQL Performance & Capacity Planning (6) 📊
 - **summarize_sql_statistics()**: Get aggregated SQL performance metrics (executions, CPU, I/O)
 - **get_database_capacity_trend()**: Analyze historical capacity trends for resource planning
@@ -46,6 +68,14 @@ MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operat
 - **enable_sqlwatch()**: Enable SQL Watch feature on a managed database
 - **disable_sqlwatch()**: Disable SQL Watch feature on a managed database
 - **get_sqlwatch_work_request()**: Track the status of SQL Watch enable/disable operations
+
+### SQL Plan Baseline Management (6 tools) 🆕
+- **list_sql_plan_baselines(database_id, profile, ...)**: List SQL plan baselines
+- **get_sql_plan_baseline(database_id, plan_name, profile)**: Get baseline details
+- **load_sql_plan_baselines_from_awr(database_id, profile, ...)**: Load baselines from AWR
+- **drop_sql_plan_baselines(database_id, plan_name, profile)**: Delete baselines
+- **enable_automatic_spm_evolve_task(database_id, profile)**: Enable SPM evolution
+- **configure_automatic_spm_capture(database_id, enabled, profile)**: Configure auto-capture
 
 ### Database Management - Core (4)
 - **list_managed_databases()**: List all managed databases in a compartment
