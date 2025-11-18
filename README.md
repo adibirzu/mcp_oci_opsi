@@ -2,6 +2,254 @@
 
 MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operations Insights. This server provides tools to query and analyze OCI Operations Insights data through Claude Desktop or Claude Code.
 
+## Architecture Overview
+
+### System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│                            USER / APPLICATION                           │
+│                                                                         │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                    Natural Language Queries
+                    "Show CPU forecast for next 30 days"
+                    "Which SQL statements are degrading?"
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│                         LARGE LANGUAGE MODEL (LLM)                      │
+│                         (Claude, GPT, etc.)                             │
+│                                                                         │
+│  • Understands user intent                                             │
+│  • Converts questions to structured MCP tool calls                     │
+│  • Formats responses in natural language                               │
+│                                                                         │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                    MCP Protocol (JSON-RPC)
+                    Tool calls with parameters
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│                    MCP OCI OPERATIONS INSIGHTS SERVER                   │
+│                         (This Application)                              │
+│                                                                         │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │  MCP Tools Layer (75+ Tools)                                     │ │
+│  │  • list_database_insights()                                      │ │
+│  │  • summarize_sql_statistics()                                    │ │
+│  │  • get_host_resource_forecast_trend()                           │ │
+│  │  • get_host_capacity_planning()                                 │ │
+│  │  • ... and 71 more tools                                        │ │
+│  └───────────────────────────────────────────────────────────────────┘ │
+│                                 │                                       │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │  Business Logic Layer                                            │ │
+│  │  • Parameter validation                                          │ │
+│  │  • Response formatting for LLM                                   │ │
+│  │  • Error handling & troubleshooting                             │ │
+│  │  • Region detection & routing                                    │ │
+│  └───────────────────────────────────────────────────────────────────┘ │
+│                                 │                                       │
+│  ┌───────────────────────────────────────────────────────────────────┐ │
+│  │  OCI SDK Client Layer                                            │ │
+│  │  • Authentication (OCI config + key)                             │ │
+│  │  • Client caching (16 cached clients)                           │ │
+│  │  • Multi-region support                                          │ │
+│  │  • API pagination handling                                       │ │
+│  └───────────────────────────────────────────────────────────────────┘ │
+│                                                                         │
+└────────────────────────────────┬────────────────────────────────────────┘
+                                 │
+                    HTTPS REST API Calls
+                    (Regional endpoints)
+                                 │
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                                                                         │
+│                    ORACLE CLOUD INFRASTRUCTURE                          │
+│                                                                         │
+│  ┌──────────────────────────┐  ┌──────────────────────────┐           │
+│  │  Operations Insights     │  │  Database Management     │           │
+│  │  Service                 │  │  Service                 │           │
+│  │                          │  │                          │           │
+│  │  • Host Insights         │  │  • Managed Databases     │           │
+│  │  • Database Insights     │  │  • SQL Plan Baselines    │           │
+│  │  • SQL Statistics        │  │  • Performance Hub       │           │
+│  │  • Capacity Planning     │  │  • ADDM                  │           │
+│  │  • Forecasting (ML)      │  │  • AWR                   │           │
+│  │  • OPSI Warehouse        │  │                          │           │
+│  └──────────────────────────┘  └──────────────────────────┘           │
+│                                                                         │
+│  Regional Endpoints:                                                   │
+│  • operationsinsights.{region}.oci.oraclecloud.com                    │
+│  • database.{region}.oraclecloud.com                                   │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow Example
+
+**User Query**: *"Show me hosts with high CPU usage in the last week"*
+
+```
+1. LLM receives natural language query
+   ↓
+2. LLM determines appropriate MCP tool:
+   → get_host_resource_statistics(
+       compartment_id="ocid1.compartment...",
+       resource_metric="CPU",
+       time_interval_start="2025-11-11T00:00:00Z",
+       time_interval_end="2025-11-18T00:00:00Z"
+     )
+   ↓
+3. MCP Server processes request:
+   • Validates parameters
+   • Authenticates with OCI using config file
+   • Detects region from compartment OCID
+   • Creates/retrieves cached OCI client
+   ↓
+4. MCP Server calls OCI API:
+   GET https://operationsinsights.uk-london-1.oci.oraclecloud.com/
+       20200630/hostInsights/resourceStatistics
+   ↓
+5. OCI Operations Insights processes:
+   • Queries telemetry database
+   • Aggregates metrics across time range
+   • Returns structured data
+   ↓
+6. MCP Server formats response:
+   {
+     "compartment_id": "ocid1.compartment...",
+     "resource_metric": "CPU",
+     "items": [
+       {
+         "host_name": "DBM08adm03",
+         "usage": 625.29,
+         "capacity": 1440,
+         "utilization_percent": 43.42
+       }
+     ],
+     "count": 24
+   }
+   ↓
+7. LLM receives structured data and formats natural response:
+   "I found 24 hosts. The highest CPU usage is on DBM08adm03
+    with 43.42% utilization (625 of 1440 CPUs in use)."
+```
+
+### Component Responsibilities
+
+#### 1. **Large Language Model (LLM)**
+- **Input**: Natural language questions from users
+- **Processing**:
+  - Understands user intent
+  - Maps questions to appropriate MCP tools
+  - Generates structured tool calls with correct parameters
+- **Output**: Natural language responses based on structured data
+
+#### 2. **MCP OCI Operations Insights Server**
+- **Input**: Structured MCP tool calls (JSON-RPC)
+- **Processing**:
+  - Validates parameters (compartment IDs, time ranges, metrics)
+  - Authenticates with OCI (reads ~/.oci/config)
+  - Routes requests to correct regional endpoints
+  - Handles pagination for large result sets
+  - Formats responses for LLM consumption
+  - Provides error handling and troubleshooting guidance
+- **Output**: Structured JSON responses optimized for LLM parsing
+
+#### 3. **Oracle Cloud Infrastructure**
+- **Input**: Authenticated REST API calls
+- **Processing**:
+  - Operations Insights Service:
+    - Collects telemetry from databases and hosts
+    - Stores metrics in time-series database
+    - Runs ML models for forecasting
+    - Aggregates data across fleet
+  - Database Management Service:
+    - Manages SQL plan baselines
+    - Provides AWR and ADDM data
+    - Tracks database configuration
+- **Output**: Raw metrics and insights data
+
+### Authentication Flow
+
+```
+┌──────────┐
+│   MCP    │
+│  Server  │
+└────┬─────┘
+     │
+     │ 1. Read OCI config
+     ├────────────────────────────┐
+     │                            │
+     ▼                            ▼
+┌─────────────────┐      ┌──────────────────┐
+│ ~/.oci/config   │      │ ~/.oci/key.pem   │
+│                 │      │                  │
+│ [DEFAULT]       │      │ (Private Key)    │
+│ user=ocid1...   │      │                  │
+│ tenancy=ocid1...│      └──────────────────┘
+│ region=us-phx-1 │
+│ key_file=~/.oci/│
+│     key.pem     │
+└─────────────────┘
+     │
+     │ 2. Create signed request
+     ▼
+┌─────────────────────────────────┐
+│  OCI API Request                │
+│  Headers:                       │
+│  • Authorization: Signature ... │
+│  • Date: ...                    │
+│  • Host: ...                    │
+└─────────────────────────────────┘
+     │
+     │ 3. Send to OCI
+     ▼
+┌─────────────────────────────────┐
+│  Oracle Cloud Infrastructure    │
+│  • Verifies signature           │
+│  • Checks IAM policies          │
+│  • Returns data if authorized   │
+└─────────────────────────────────┘
+```
+
+### Multi-Region Support
+
+The MCP server automatically handles multi-region deployments:
+
+```
+User Query: "Show databases in all regions"
+              ↓
+         MCP Server
+              ↓
+    ┌─────────┴─────────┐
+    ▼                   ▼
+┌──────────┐      ┌──────────┐
+│ Region 1 │      │ Region 2 │
+│ us-phx-1 │      │ uk-lon-1 │
+└────┬─────┘      └────┬─────┘
+     │                 │
+     ▼                 ▼
+  [Data 1]         [Data 2]
+     │                 │
+     └────────┬────────┘
+              ▼
+      Aggregated Response
+```
+
+**Region Detection Methods:**
+1. **From OCID**: `ocid1.opsidatabaseinsight.oc1.uk-london-1.xxx` → uk-london-1
+2. **From Cache**: Database cache stores region per database
+3. **From Config**: Default region in ~/.oci/config
+4. **Explicit**: User can specify region parameter
+
 ## Features
 
 **Total: 75 MCP Tools for comprehensive OCI database operations**
