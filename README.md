@@ -443,7 +443,7 @@ Claude, who am I? (or use whoami tool)
 
 **Get info about a specific profile:**
 ```
-Claude, get profile info for emdemo
+Claude, get profile info for X tenant 
 ```
 
 **Switch to a different profile:**
@@ -454,7 +454,7 @@ Claude, get profile info for emdemo
    OCI_CLI_PROFILE=DEFAULT
 
    # To:
-   OCI_CLI_PROFILE=emdemo
+   OCI_CLI_PROFILE=X
    ```
 
 2. Restart the MCP server or Claude Desktop/Code
@@ -484,7 +484,7 @@ cd /Users/abirzu/dev/mcp_oci_opsi
 
 **Or with a specific profile:**
 ```bash
-./scripts/setup_and_build.sh --profile emdemo
+./scripts/setup_and_build.sh --profile X
 ```
 
 This script will:
