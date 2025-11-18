@@ -260,6 +260,13 @@ User Query: "Show databases in all regions"
 - **Advanced SQL Insights** - SQL performance insights with anomaly detection
 - **ADDM Findings** - Consolidated ADDM findings across database fleet
 
+### 🆕 NEW: EM-Managed Database Support
+- **Automatic EM-Managed Detection** - Identifies Enterprise Manager-managed databases automatically
+- **Warehouse Query Fallback** - Transparent fallback to warehouse queries when direct APIs unavailable
+- **Clear Error Messages** - No more misleading "permission denied" errors for EM-Managed databases
+- **Actionable Alternatives** - Concrete solutions when data unavailable (warehouse, Database Management APIs)
+- **See [EM_MANAGED_DATABASES.md](./EM_MANAGED_DATABASES.md) for complete documentation**
+
 ### Enhanced Profile Management Tools (11 tools) 🆕
 - **list_oci_profiles_enhanced()**: List all profiles with comprehensive validation
 - **get_oci_profile_details(profile)**: Get detailed profile configuration

@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Any, Optional
+import oci
 
 from .oci_clients import get_opsi_client, list_all, extract_region_from_ocid, get_ocid_resource_type
 
@@ -61,6 +62,139 @@ def list_host_insights(
             "error": str(e),
             "type": type(e).__name__,
             "compartment_id": compartment_id,
+        }
+
+
+def _is_em_managed_database(database_insight_id: str, region: Optional[str] = None) -> bool:
+    """
+    Check if a database insight is EM-Managed External Database type.
+
+    EM-Managed databases have limited API support for SQL Statistics and other APIs.
+
+    Args:
+        database_insight_id: Database insight OCID
+        region: Optional region override
+
+    Returns:
+        True if EM-Managed, False otherwise
+    """
+    try:
+        client = get_opsi_client(region=region)
+        response = client.get_database_insight(database_insight_id)
+        db_insight = response.data
+
+        # Check if it's EM-Managed
+        entity_source = getattr(db_insight, "entity_source", None)
+        return entity_source == "EM_MANAGED_EXTERNAL_DATABASE"
+
+    except Exception:
+        # If we can't determine, assume it's not EM-Managed
+        return False
+
+
+def _query_sql_statistics_from_warehouse(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    database_id: Optional[str] = None,
+    region: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Fallback method to get SQL statistics using warehouse queries.
+
+    This is used when the direct API doesn't work (e.g., for EM-Managed databases).
+    """
+    from .tools_opsi import query_warehouse_standard
+
+    # Build SQL query for warehouse
+    # The warehouse has tables like database_sql_statistics with SQL performance data
+    where_clauses = [
+        f"time_collected >= TIMESTAMP '{time_interval_start.replace('Z', '').replace('T', ' ')}'"
+    ]
+
+    if database_id:
+        where_clauses.append(f"database_id = '{database_id}'")
+
+    where_clause = " AND ".join(where_clauses)
+
+    # Query for SQL statistics
+    sql_query = f"""
+        SELECT
+            sql_identifier,
+            database_id,
+            database_name,
+            database_display_name,
+            SUM(executions_count) as executions_count,
+            AVG(executions_per_hour) as executions_per_hour,
+            SUM(cpu_time_in_sec) as cpu_time_in_sec,
+            SUM(io_time_in_sec) as io_time_in_sec,
+            SUM(database_time_in_sec) as database_time_in_sec,
+            AVG(database_time_pct) as database_time_pct,
+            SUM(inefficient_wait_time_in_sec) as inefficient_wait_time_in_sec,
+            AVG(response_time_in_sec) as response_time_in_sec,
+            AVG(average_active_sessions) as average_active_sessions,
+            MAX(plan_count) as plan_count
+        FROM database_sql_statistics
+        WHERE {where_clause}
+        GROUP BY sql_identifier, database_id, database_name, database_display_name
+        ORDER BY cpu_time_in_sec DESC
+        FETCH FIRST 100 ROWS ONLY
+    """
+
+    try:
+        warehouse_result = query_warehouse_standard(
+            compartment_id=compartment_id,
+            statement=sql_query,
+            region=region
+        )
+
+        # Transform warehouse results to match API response format
+        if "error" in warehouse_result:
+            return warehouse_result
+
+        items = []
+        if "rows" in warehouse_result:
+            columns = warehouse_result.get("columns", [])
+            for row in warehouse_result["rows"]:
+                # Create a dict from row values
+                row_dict = {}
+                for i, col in enumerate(columns):
+                    if i < len(row):
+                        row_dict[col] = row[i]
+
+                items.append(row_dict)
+
+        return {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "items": items,
+            "count": len(items),
+            "data_source": "warehouse_query",
+            "note": "Data retrieved via warehouse query (EM-Managed database fallback)"
+        }
+
+    except Exception as e:
+        return {
+            "error": f"Warehouse query fallback failed: {str(e)}",
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+            "troubleshooting": {
+                "issue": "Both direct API and warehouse query failed for EM-Managed database",
+                "possible_causes": [
+                    "Operations Insights warehouse not enabled",
+                    "Warehouse data not yet populated",
+                    "Missing warehouse access permissions"
+                ],
+                "required_permissions": [
+                    "Allow group <YourGroup> to use operations-insights-warehouse in compartment"
+                ],
+                "next_steps": [
+                    "Enable Operations Insights warehouse in OCI Console",
+                    "Wait 24-48 hours for warehouse data to populate",
+                    "Check IAM policies for warehouse access"
+                ]
+            }
         }
 
 
@@ -218,6 +352,50 @@ def summarize_sql_statistics(
 
     except Exception as e:
         error_msg = str(e)
+
+        # Check if it's a 404 error and if the database is EM-Managed
+        is_404_error = "NotAuthorizedOrNotFound" in error_msg or "404" in error_msg
+
+        if is_404_error and database_id:
+            # Check if this is an EM-Managed database
+            is_em_managed = _is_em_managed_database(database_id, region=region)
+
+            if is_em_managed:
+                # Try warehouse query fallback for EM-Managed databases
+                print(f"Detected EM-Managed database. Attempting warehouse query fallback...")
+
+                warehouse_result = _query_sql_statistics_from_warehouse(
+                    compartment_id=compartment_id,
+                    time_interval_start=time_interval_start,
+                    time_interval_end=time_interval_end,
+                    database_id=database_id,
+                    region=region
+                )
+
+                # Add EM-Managed context to the result
+                if "error" not in warehouse_result:
+                    warehouse_result["em_managed_database"] = True
+                    warehouse_result["note"] = (
+                        "This is an EM-Managed External Database. "
+                        "SQL Statistics API is not available for this database type. "
+                        "Data retrieved via warehouse query instead."
+                    )
+                else:
+                    # Warehouse fallback also failed, add EM-Managed specific guidance
+                    warehouse_result["em_managed_database"] = True
+                    warehouse_result["additional_info"] = {
+                        "database_type": "EM_MANAGED_EXTERNAL_DATABASE",
+                        "limitation": "SQL Statistics API is not supported for EM-Managed databases",
+                        "alternatives": [
+                            "Enable Operations Insights warehouse and wait for data population",
+                            "Use Database Management Service Performance Hub APIs",
+                            "Enable native OPSI agent on the database (requires reconfiguration)"
+                        ]
+                    }
+
+                return warehouse_result
+
+        # Standard error handling for non-EM-Managed databases
         error_result = {
             "error": error_msg,
             "type": type(e).__name__,
@@ -225,10 +403,11 @@ def summarize_sql_statistics(
         }
 
         # Add troubleshooting guidance for common errors
-        if "NotAuthorizedOrNotFound" in error_msg or "404" in error_msg:
+        if is_404_error:
             error_result["troubleshooting"] = {
                 "possible_causes": [
                     "Database does not have Operations Insights enabled",
+                    "Database is EM-Managed External Database (limited API support)",
                     "Missing IAM permissions for SQL statistics",
                     "Database insight ID is incorrect",
                     "Regional mismatch - database may be in different region"
@@ -238,9 +417,11 @@ def summarize_sql_statistics(
                     "Allow group <YourGroup> to read opsi-data-objects in compartment"
                 ],
                 "next_steps": [
+                    "Run diagnose_permissions.py to identify the root cause",
+                    "Check if database is EM-Managed type (limited API support)",
                     "Verify database has Operations Insights enabled",
                     "Check IAM policies in the database compartment",
-                    "Confirm the database_id OCID is correct"
+                    "Consider enabling warehouse queries for EM-Managed databases"
                 ]
             }
 
