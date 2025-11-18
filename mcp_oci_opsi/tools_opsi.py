@@ -47,7 +47,7 @@ def list_database_insights(
         response = client.list_database_insights(**kwargs)
 
         items = []
-        for db_insight in response.data:
+        for db_insight in response.data.items:
             items.append({
                 "id": db_insight.id,
                 "compartment_id": db_insight.compartment_id,

@@ -168,16 +168,39 @@ def summarize_sql_statistics(
         items = []
         if hasattr(response.data, "items"):
             for item in response.data.items:
+                # Get database details
+                db_id = None
+                db_name = None
+                db_display_name = None
+                if hasattr(item, "database_details") and item.database_details:
+                    db_id = getattr(item.database_details, "id", None)
+                    db_name = getattr(item.database_details, "database_name", None)
+                    db_display_name = getattr(item.database_details, "database_display_name", None)
+
+                # Get statistics - they are nested in item.statistics
+                stats = {}
+                if hasattr(item, "statistics") and item.statistics:
+                    stats = {
+                        "executions_count": getattr(item.statistics, "executions_count", None),
+                        "executions_per_hour": getattr(item.statistics, "executions_per_hour", None),
+                        "cpu_time_in_sec": getattr(item.statistics, "cpu_time_in_sec", None),
+                        "io_time_in_sec": getattr(item.statistics, "io_time_in_sec", None),
+                        "database_time_in_sec": getattr(item.statistics, "database_time_in_sec", None),
+                        "database_time_pct": getattr(item.statistics, "database_time_pct", None),
+                        "inefficient_wait_time_in_sec": getattr(item.statistics, "inefficient_wait_time_in_sec", None),
+                        "response_time_in_sec": getattr(item.statistics, "response_time_in_sec", None),
+                        "average_active_sessions": getattr(item.statistics, "average_active_sessions", None),
+                        "plan_count": getattr(item.statistics, "plan_count", None),
+                        "variability": getattr(item.statistics, "variability", None),
+                    }
+
                 items.append({
                     "sql_identifier": getattr(item, "sql_identifier", None),
-                    "database_id": getattr(item, "database_id", None),
-                    "executions_count": getattr(item, "executions_count", None),
-                    "cpu_time_in_sec": getattr(item, "cpu_time_in_sec", None),
-                    "elapsed_time_in_sec": getattr(item, "elapsed_time_in_sec", None),
-                    "buffer_gets": getattr(item, "buffer_gets", None),
-                    "disk_reads": getattr(item, "disk_reads", None),
-                    "direct_writes": getattr(item, "direct_writes", None),
-                    "rows_processed": getattr(item, "rows_processed", None),
+                    "database_id": db_id,
+                    "database_name": db_name,
+                    "database_display_name": db_display_name,
+                    "category": getattr(item, "category", None),
+                    **stats  # Unpack statistics into the item dict
                 })
 
         result = {
@@ -528,6 +551,893 @@ def summarize_host_insight_resource_statistics(
                     "capacity": getattr(item, "capacity", None),
                     "utilization_percent": getattr(item, "utilization_percent", None),
                     "usage_change_percent": getattr(item, "usage_change_percent", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "items": items,
+            "count": len(items),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_resource_forecast_trend(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    forecast_days: int = 30,
+    host_id: Optional[str] = None,
+    statistic: Optional[str] = "AVG",
+) -> dict[str, Any]:
+    """
+    Get ML-based resource utilization forecast for host capacity planning.
+
+    Provides forecasts for future resource utilization to help with capacity
+    planning and resource allocation decisions. This matches the OCI Console
+    forecast functionality.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE, LOGICAL_MEMORY).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        forecast_days: Number of days to forecast (default 30).
+        host_id: Optional host insight OCID filter.
+        statistic: Statistic type (AVG, MAX, MIN). Default AVG.
+
+    Returns:
+        Dictionary containing resource forecast data with trend analysis.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+            "forecast_days": forecast_days,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        if statistic:
+            kwargs["statistic"] = statistic
+
+        response = client.summarize_host_insight_resource_forecast_trend(
+            **kwargs,
+        )
+
+        forecast_items = []
+        if hasattr(response.data, "usage_data") and response.data.usage_data:
+            for item in response.data.usage_data:
+                forecast_items.append({
+                    "end_timestamp": str(getattr(item, "end_timestamp", None)),
+                    "usage": getattr(item, "usage", None),
+                    "high_value": getattr(item, "high_value", None),
+                    "low_value": getattr(item, "low_value", None),
+                })
+
+        result = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "forecast_days": forecast_days,
+            "statistic": statistic,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "forecast_items": forecast_items,
+            "count": len(forecast_items),
+        }
+
+        # Add summary data if available
+        if hasattr(response.data, "time_interval_start"):
+            result["response_time_start"] = str(response.data.time_interval_start)
+        if hasattr(response.data, "time_interval_end"):
+            result["response_time_end"] = str(response.data.time_interval_end)
+        if hasattr(response.data, "item_duration_in_ms"):
+            result["item_duration_in_ms"] = response.data.item_duration_in_ms
+        if hasattr(response.data, "usage_unit"):
+            result["usage_unit"] = response.data.usage_unit
+
+        return result
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+        }
+
+
+def summarize_host_insight_resource_capacity_trend(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+    utilization_level: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get capacity planning trends for host resource utilization.
+
+    Provides historical trends for resource capacity including CPU, memory,
+    storage, and network metrics.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+        utilization_level: Filter by utilization level (HIGH_UTILIZATION, LOW_UTILIZATION).
+
+    Returns:
+        Dictionary containing capacity trend analysis.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        if utilization_level:
+            kwargs["utilization_level"] = utilization_level
+
+        response = client.summarize_host_insight_resource_capacity_trend(
+            **kwargs,
+        )
+
+        trend_items = []
+        if hasattr(response.data, "usage_data") and response.data.usage_data:
+            for item in response.data.usage_data:
+                trend_items.append({
+                    "end_timestamp": str(getattr(item, "end_timestamp", None)),
+                    "capacity": getattr(item, "capacity", None),
+                    "usage": getattr(item, "usage", None),
+                    "utilization_percent": getattr(item, "utilization_percent", None),
+                })
+
+        result = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "trend_items": trend_items,
+            "count": len(trend_items),
+        }
+
+        if hasattr(response.data, "usage_unit"):
+            result["usage_unit"] = response.data.usage_unit
+        if hasattr(response.data, "item_duration_in_ms"):
+            result["item_duration_in_ms"] = response.data.item_duration_in_ms
+
+        return result
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_resource_usage(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get current resource usage summary for hosts.
+
+    Provides aggregated resource usage data for capacity planning and monitoring.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing resource usage summary.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_resource_usage(
+            **kwargs,
+        )
+
+        items = []
+        if hasattr(response.data, "items") and response.data.items:
+            for item in response.data.items:
+                items.append({
+                    "host_id": getattr(item, "id", None),
+                    "host_name": getattr(item, "host_name", None),
+                    "platform_type": getattr(item, "platform_type", None),
+                    "usage": getattr(item, "usage", None),
+                    "capacity": getattr(item, "capacity", None),
+                    "utilization_percent": getattr(item, "utilization_percent", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "items": items,
+            "count": len(items),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_resource_usage_trend(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get resource usage trends over time for hosts.
+
+    Provides time-series data for resource usage to identify trends and patterns.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing resource usage trend data.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_resource_usage_trend(
+            **kwargs,
+        )
+
+        usage_data = []
+        if hasattr(response.data, "usage_data") and response.data.usage_data:
+            for item in response.data.usage_data:
+                usage_data.append({
+                    "end_timestamp": str(getattr(item, "end_timestamp", None)),
+                    "usage": getattr(item, "usage", None),
+                    "capacity": getattr(item, "capacity", None),
+                })
+
+        result = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "usage_data": usage_data,
+            "count": len(usage_data),
+        }
+
+        if hasattr(response.data, "usage_unit"):
+            result["usage_unit"] = response.data.usage_unit
+        if hasattr(response.data, "item_duration_in_ms"):
+            result["item_duration_in_ms"] = response.data.item_duration_in_ms
+
+        return result
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_resource_utilization_insight(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+    forecast_days: int = 30,
+) -> dict[str, Any]:
+    """
+    Get resource utilization insights with projections and recommendations.
+
+    Provides comprehensive insights including current utilization, projections,
+    and capacity recommendations for hosts.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+        forecast_days: Number of days to forecast (default 30).
+
+    Returns:
+        Dictionary containing utilization insights and recommendations.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+            "forecast_days": forecast_days,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_resource_utilization_insight(
+            **kwargs,
+        )
+
+        items = []
+        if hasattr(response.data, "items") and response.data.items:
+            for item in response.data.items:
+                items.append({
+                    "host_id": getattr(item, "id", None),
+                    "host_name": getattr(item, "host_name", None),
+                    "current_utilization": getattr(item, "current_utilization", None),
+                    "projected_utilization": getattr(item, "projected_utilization", None),
+                    "days_to_reach_capacity": getattr(item, "days_to_reach_capacity", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "forecast_days": forecast_days,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "items": items,
+            "count": len(items),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+def summarize_host_insight_disk_statistics(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get disk I/O statistics for hosts.
+
+    Provides detailed disk I/O metrics including read/write operations,
+    throughput, and latency statistics.
+
+    Args:
+        compartment_id: Compartment OCID.
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing disk statistics.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_disk_statistics(
+            **kwargs,
+        )
+
+        items = []
+        if hasattr(response.data, "items") and response.data.items:
+            for item in response.data.items:
+                items.append({
+                    "disk_name": getattr(item, "disk_name", None),
+                    "disk_read_in_mbs": getattr(item, "disk_read_in_mbs", None),
+                    "disk_write_in_mbs": getattr(item, "disk_write_in_mbs", None),
+                    "disk_iops": getattr(item, "disk_iops", None),
+                    "disk_io_time_in_sec": getattr(item, "disk_io_time_in_sec", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "items": items,
+            "count": len(items),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_io_usage_trend(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get I/O usage trends over time for hosts.
+
+    Provides time-series data for I/O operations including reads, writes,
+    and IOPS metrics.
+
+    Args:
+        compartment_id: Compartment OCID.
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing I/O usage trend data.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_io_usage_trend(
+            **kwargs,
+        )
+
+        usage_data = []
+        if hasattr(response.data, "usage_data") and response.data.usage_data:
+            for item in response.data.usage_data:
+                usage_data.append({
+                    "end_timestamp": str(getattr(item, "end_timestamp", None)),
+                    "disk_read_in_mbs": getattr(item, "disk_read_in_mbs", None),
+                    "disk_write_in_mbs": getattr(item, "disk_write_in_mbs", None),
+                    "disk_iops": getattr(item, "disk_iops", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "usage_data": usage_data,
+            "count": len(usage_data),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_network_usage_trend(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get network usage trends over time for hosts.
+
+    Provides time-series data for network metrics including throughput,
+    packet counts, and errors.
+
+    Args:
+        compartment_id: Compartment OCID.
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing network usage trend data.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_network_usage_trend(
+            **kwargs,
+        )
+
+        usage_data = []
+        if hasattr(response.data, "usage_data") and response.data.usage_data:
+            for item in response.data.usage_data:
+                usage_data.append({
+                    "end_timestamp": str(getattr(item, "end_timestamp", None)),
+                    "network_read_in_mbs": getattr(item, "network_read_in_mbs", None),
+                    "network_write_in_mbs": getattr(item, "network_write_in_mbs", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "usage_data": usage_data,
+            "count": len(usage_data),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_storage_usage_trend(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get storage usage trends over time for hosts.
+
+    Provides time-series data for storage utilization including filesystem
+    usage and capacity metrics.
+
+    Args:
+        compartment_id: Compartment OCID.
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing storage usage trend data.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_storage_usage_trend(
+            **kwargs,
+        )
+
+        usage_data = []
+        if hasattr(response.data, "usage_data") and response.data.usage_data:
+            for item in response.data.usage_data:
+                usage_data.append({
+                    "end_timestamp": str(getattr(item, "end_timestamp", None)),
+                    "filesystem_usage": getattr(item, "filesystem_usage", None),
+                    "filesystem_capacity": getattr(item, "filesystem_capacity", None),
+                    "filesystem_utilization_percent": getattr(item, "filesystem_utilization_percent", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "usage_data": usage_data,
+            "count": len(usage_data),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_top_processes_usage(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+    limit: int = 10,
+) -> dict[str, Any]:
+    """
+    Get top resource-consuming processes on hosts.
+
+    Identifies the top processes consuming CPU, memory, or other resources
+    to help with performance troubleshooting.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+        limit: Maximum number of top processes to return (default 10).
+
+    Returns:
+        Dictionary containing top processes data.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+            "limit": limit,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_top_processes_usage(
+            **kwargs,
+        )
+
+        items = []
+        if hasattr(response.data, "items") and response.data.items:
+            for item in response.data.items:
+                items.append({
+                    "process_name": getattr(item, "process_name", None),
+                    "process_command": getattr(item, "process_command", None),
+                    "process_id": getattr(item, "process_id", None),
+                    "cpu_usage": getattr(item, "cpu_usage", None),
+                    "memory_usage": getattr(item, "memory_usage", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "items": items,
+            "count": len(items),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_top_processes_usage_trend(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get trends for top resource-consuming processes over time.
+
+    Provides time-series data for top processes to identify patterns and
+    resource consumption changes.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing top processes trend data.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_top_processes_usage_trend(
+            **kwargs,
+        )
+
+        usage_data = []
+        if hasattr(response.data, "usage_data") and response.data.usage_data:
+            for item in response.data.usage_data:
+                usage_data.append({
+                    "end_timestamp": str(getattr(item, "end_timestamp", None)),
+                    "process_name": getattr(item, "process_name", None),
+                    "cpu_usage": getattr(item, "cpu_usage", None),
+                    "memory_usage": getattr(item, "memory_usage", None),
+                })
+
+        return {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_interval_start,
+            "time_interval_end": time_interval_end,
+            "usage_data": usage_data,
+            "count": len(usage_data),
+        }
+
+    except Exception as e:
+        return {
+            "error": str(e),
+            "type": type(e).__name__,
+            "compartment_id": compartment_id,
+        }
+
+
+def summarize_host_insight_host_recommendation(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Get AI-driven host configuration recommendations.
+
+    Provides intelligent recommendations for host sizing, resource allocation,
+    and optimization based on usage patterns and trends.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing host recommendations.
+    """
+    try:
+        client = get_opsi_client()
+
+        # Convert time strings to datetime
+        time_start = datetime.fromisoformat(time_interval_start.replace("Z", "+00:00"))
+        time_end = datetime.fromisoformat(time_interval_end.replace("Z", "+00:00"))
+
+        kwargs = {
+            "compartment_id": compartment_id,
+            "resource_metric": resource_metric,
+            "time_interval_start": time_start,
+            "time_interval_end": time_end,
+        }
+
+        if host_id:
+            kwargs["id"] = [host_id]
+
+        response = client.summarize_host_insight_host_recommendation(
+            **kwargs,
+        )
+
+        items = []
+        if hasattr(response.data, "items") and response.data.items:
+            for item in response.data.items:
+                items.append({
+                    "host_id": getattr(item, "id", None),
+                    "host_name": getattr(item, "host_name", None),
+                    "recommendation_type": getattr(item, "recommendation_type", None),
+                    "recommendation_details": getattr(item, "recommendation_details", None),
+                    "estimated_savings": getattr(item, "estimated_savings", None),
                 })
 
         return {

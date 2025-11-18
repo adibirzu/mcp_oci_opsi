@@ -22,6 +22,9 @@ from . import tools_visualization
 from . import tools_profile_management
 from . import tools_dbmanagement_sql_plans
 from . import tools_opsi_sql_insights
+# Diagnostic and bulk operation tools
+from . import tools_opsi_diagnostics
+from . import tools_sqlwatch_bulk
 
 # Initialize FastMCP application
 app = FastMCP("oci-opsi")
@@ -866,6 +869,326 @@ def get_host_resource_statistics(
         Dictionary containing host resource statistics.
     """
     return tools_opsi_extended.summarize_host_insight_resource_statistics(
+        compartment_id, resource_metric, time_interval_start, time_interval_end, host_id
+    )
+
+
+@app.tool()
+def get_host_resource_forecast_trend(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    forecast_days: int = 30,
+    host_id: Optional[str] = None,
+    statistic: Optional[str] = "AVG",
+) -> dict:
+    """
+    Get ML-based resource utilization forecast for host capacity planning.
+
+    This provides the same forecast data you see in OCI Console's Host Capacity Planning view.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE, LOGICAL_MEMORY).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        forecast_days: Number of days to forecast (default 30).
+        host_id: Optional host insight OCID filter.
+        statistic: Statistic type (AVG, MAX, MIN). Default AVG.
+
+    Returns:
+        Dictionary containing resource forecast data with trend analysis.
+    """
+    return tools_opsi_extended.summarize_host_insight_resource_forecast_trend(
+        compartment_id, resource_metric, time_interval_start, time_interval_end,
+        forecast_days, host_id, statistic
+    )
+
+
+@app.tool()
+def get_host_resource_capacity_trend(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+    utilization_level: Optional[str] = None,
+) -> dict:
+    """
+    Get capacity planning trends for host resource utilization.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+        utilization_level: Filter by utilization level (HIGH_UTILIZATION, LOW_UTILIZATION).
+
+    Returns:
+        Dictionary containing capacity trend analysis.
+    """
+    return tools_opsi_extended.summarize_host_insight_resource_capacity_trend(
+        compartment_id, resource_metric, time_interval_start, time_interval_end,
+        host_id, utilization_level
+    )
+
+
+@app.tool()
+def get_host_resource_usage(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict:
+    """
+    Get current resource usage summary for hosts.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing resource usage summary.
+    """
+    return tools_opsi_extended.summarize_host_insight_resource_usage(
+        compartment_id, resource_metric, time_interval_start, time_interval_end, host_id
+    )
+
+
+@app.tool()
+def get_host_resource_usage_trend(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict:
+    """
+    Get resource usage trends over time for hosts.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing resource usage trend data.
+    """
+    return tools_opsi_extended.summarize_host_insight_resource_usage_trend(
+        compartment_id, resource_metric, time_interval_start, time_interval_end, host_id
+    )
+
+
+@app.tool()
+def get_host_resource_utilization_insight(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+    forecast_days: int = 30,
+) -> dict:
+    """
+    Get resource utilization insights with projections and recommendations.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, NETWORK, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+        forecast_days: Number of days to forecast (default 30).
+
+    Returns:
+        Dictionary containing utilization insights and recommendations.
+    """
+    return tools_opsi_extended.summarize_host_insight_resource_utilization_insight(
+        compartment_id, resource_metric, time_interval_start, time_interval_end,
+        host_id, forecast_days
+    )
+
+
+@app.tool()
+def get_host_disk_statistics(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict:
+    """
+    Get disk I/O statistics for hosts.
+
+    Args:
+        compartment_id: Compartment OCID.
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing disk statistics.
+    """
+    return tools_opsi_extended.summarize_host_insight_disk_statistics(
+        compartment_id, time_interval_start, time_interval_end, host_id
+    )
+
+
+@app.tool()
+def get_host_io_usage_trend(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict:
+    """
+    Get I/O usage trends over time for hosts.
+
+    Args:
+        compartment_id: Compartment OCID.
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing I/O usage trend data.
+    """
+    return tools_opsi_extended.summarize_host_insight_io_usage_trend(
+        compartment_id, time_interval_start, time_interval_end, host_id
+    )
+
+
+@app.tool()
+def get_host_network_usage_trend(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict:
+    """
+    Get network usage trends over time for hosts.
+
+    Args:
+        compartment_id: Compartment OCID.
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing network usage trend data.
+    """
+    return tools_opsi_extended.summarize_host_insight_network_usage_trend(
+        compartment_id, time_interval_start, time_interval_end, host_id
+    )
+
+
+@app.tool()
+def get_host_storage_usage_trend(
+    compartment_id: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict:
+    """
+    Get storage usage trends over time for hosts.
+
+    Args:
+        compartment_id: Compartment OCID.
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing storage usage trend data.
+    """
+    return tools_opsi_extended.summarize_host_insight_storage_usage_trend(
+        compartment_id, time_interval_start, time_interval_end, host_id
+    )
+
+
+@app.tool()
+def get_host_top_processes_usage(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+    limit: int = 10,
+) -> dict:
+    """
+    Get top resource-consuming processes on hosts.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+        limit: Maximum number of top processes to return (default 10).
+
+    Returns:
+        Dictionary containing top processes data.
+    """
+    return tools_opsi_extended.summarize_host_insight_top_processes_usage(
+        compartment_id, resource_metric, time_interval_start, time_interval_end,
+        host_id, limit
+    )
+
+
+@app.tool()
+def get_host_top_processes_usage_trend(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict:
+    """
+    Get trends for top resource-consuming processes over time.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing top processes trend data.
+    """
+    return tools_opsi_extended.summarize_host_insight_top_processes_usage_trend(
+        compartment_id, resource_metric, time_interval_start, time_interval_end, host_id
+    )
+
+
+@app.tool()
+def get_host_recommendations(
+    compartment_id: str,
+    resource_metric: str,
+    time_interval_start: str,
+    time_interval_end: str,
+    host_id: Optional[str] = None,
+) -> dict:
+    """
+    Get AI-driven host configuration recommendations.
+
+    Args:
+        compartment_id: Compartment OCID.
+        resource_metric: Resource metric (CPU, MEMORY, STORAGE).
+        time_interval_start: Start time in ISO format.
+        time_interval_end: End time in ISO format.
+        host_id: Optional host insight OCID filter.
+
+    Returns:
+        Dictionary containing host recommendations.
+    """
+    return tools_opsi_extended.summarize_host_insight_host_recommendation(
         compartment_id, resource_metric, time_interval_start, time_interval_end, host_id
     )
 
@@ -1869,6 +2192,195 @@ def get_sql_insight_details(
         profile=profile,
         time_interval_start=time_interval_start,
         time_interval_end=time_interval_end,
+    )
+
+
+# ============================================================================
+# Operations Insights Diagnostic Tools
+# ============================================================================
+
+
+@app.tool()
+def diagnose_opsi_permissions(
+    compartment_id: str,
+    profile: Optional[str] = None,
+) -> dict:
+    """
+    Diagnose Operations Insights IAM permissions and identify missing policies.
+
+    Tests various OPSI operations to determine which permissions are granted
+    and which are missing, helping troubleshoot authorization errors.
+
+    Args:
+        compartment_id: Compartment OCID to test permissions in.
+        profile: OCI profile name for multi-tenancy support.
+
+    Returns:
+        Dictionary with permission test results and recommendations.
+    """
+    return tools_opsi_diagnostics.diagnose_opsi_permissions(
+        compartment_id=compartment_id,
+        profile=profile,
+    )
+
+
+@app.tool()
+def check_sqlwatch_status_bulk(
+    compartment_id: str,
+    profile: Optional[str] = None,
+    lifecycle_state: str = "ACTIVE",
+) -> dict:
+    """
+    Check SQL Watch status across all managed databases in a compartment.
+
+    SQL Watch is required for detailed SQL-level monitoring. This tool
+    identifies which databases have SQL Watch enabled/disabled.
+
+    Args:
+        compartment_id: Compartment OCID.
+        profile: OCI profile name for multi-tenancy support.
+        lifecycle_state: Filter by lifecycle state (default: ACTIVE).
+
+    Returns:
+        Dictionary with SQL Watch status for each database.
+    """
+    return tools_opsi_diagnostics.check_sqlwatch_status_bulk(
+        compartment_id=compartment_id,
+        profile=profile,
+        lifecycle_state=lifecycle_state,
+    )
+
+
+@app.tool()
+def check_database_insights_configuration(
+    compartment_id: str,
+    profile: Optional[str] = None,
+) -> dict:
+    """
+    Check Operations Insights configuration for all database insights.
+
+    Identifies databases with incomplete configuration for SQL-level monitoring.
+
+    Args:
+        compartment_id: Compartment OCID.
+        profile: OCI profile name for multi-tenancy support.
+
+    Returns:
+        Dictionary with configuration status for each database insight.
+    """
+    return tools_opsi_diagnostics.check_database_insights_configuration(
+        compartment_id=compartment_id,
+        profile=profile,
+    )
+
+
+@app.tool()
+def get_comprehensive_diagnostics(
+    compartment_id: str,
+    profile: Optional[str] = None,
+) -> dict:
+    """
+    Run comprehensive diagnostics for Operations Insights SQL analytics issues.
+
+    Combines all diagnostic checks to provide complete picture of configuration
+    and permission issues with actionable recommendations.
+
+    Args:
+        compartment_id: Compartment OCID.
+        profile: OCI profile name for multi-tenancy support.
+
+    Returns:
+        Dictionary with complete diagnostic results and prioritized action plan.
+    """
+    return tools_opsi_diagnostics.get_comprehensive_diagnostics(
+        compartment_id=compartment_id,
+        profile=profile,
+    )
+
+
+# ============================================================================
+# SQL Watch Bulk Management Tools
+# ============================================================================
+
+
+@app.tool()
+def enable_sqlwatch_bulk(
+    compartment_id: str,
+    profile: Optional[str] = None,
+    database_type_filter: Optional[str] = None,
+    dry_run: bool = True,
+) -> dict:
+    """
+    Enable SQL Watch on multiple managed databases in bulk.
+
+    SQL Watch is required for detailed SQL-level monitoring in Operations Insights.
+
+    Args:
+        compartment_id: Compartment OCID.
+        profile: OCI profile name for multi-tenancy support.
+        database_type_filter: Filter by database type (optional).
+        dry_run: If True, shows what would be done without making changes.
+
+    Returns:
+        Dictionary with enablement results for each database.
+    """
+    return tools_sqlwatch_bulk.enable_sqlwatch_bulk(
+        compartment_id=compartment_id,
+        profile=profile,
+        database_type_filter=database_type_filter,
+        dry_run=dry_run,
+    )
+
+
+@app.tool()
+def disable_sqlwatch_bulk(
+    compartment_id: str,
+    profile: Optional[str] = None,
+    dry_run: bool = True,
+) -> dict:
+    """
+    Disable SQL Watch on multiple managed databases in bulk.
+
+    Use with caution - this stops detailed SQL-level monitoring.
+
+    Args:
+        compartment_id: Compartment OCID.
+        profile: OCI profile name for multi-tenancy support.
+        dry_run: If True, shows what would be done without making changes.
+
+    Returns:
+        Dictionary with disable results for each database.
+    """
+    return tools_sqlwatch_bulk.disable_sqlwatch_bulk(
+        compartment_id=compartment_id,
+        profile=profile,
+        dry_run=dry_run,
+    )
+
+
+@app.tool()
+def check_sqlwatch_work_requests(
+    compartment_id: str,
+    profile: Optional[str] = None,
+    hours_back: int = 1,
+) -> dict:
+    """
+    Check the status of SQL Watch enablement work requests.
+
+    Monitors progress of SQL Watch enable/disable operations.
+
+    Args:
+        compartment_id: Compartment OCID.
+        profile: OCI profile name for multi-tenancy support.
+        hours_back: How many hours back to check work requests (default: 1).
+
+    Returns:
+        Dictionary with work request status information.
+    """
+    return tools_sqlwatch_bulk.check_sqlwatch_work_requests(
+        compartment_id=compartment_id,
+        profile=profile,
+        hours_back=hours_back,
     )
 
 
