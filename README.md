@@ -1,6 +1,12 @@
 # MCP OCI OPSI Server
 
+**Version 2.0** | **117 Tools** | **Read-Only** | **Multi-Tenancy**
+
 MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operations Insights. This server provides tools to query and analyze OCI Operations Insights data through Claude Desktop or Claude Code.
+
+> **📚 Complete Documentation**: See [README_UPDATED.md](./README_UPDATED.md) for comprehensive v2.0 documentation, or visit the [GitHub Wiki](./wiki/Home.md) for detailed guides.
+>
+> **🚀 Quick Start**: [Installation Guide](./wiki/Installation.md) | [Quick Start](./wiki/Quick-Start.md) | [API Coverage](./wiki/API-Coverage.md)
 
 ## Architecture Overview
 
@@ -39,12 +45,13 @@ MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operat
 │                         (This Application)                              │
 │                                                                         │
 │  ┌───────────────────────────────────────────────────────────────────┐ │
-│  │  MCP Tools Layer (75+ Tools)                                     │ │
+│  │  MCP Tools Layer (117 Tools)                                    │ │
 │  │  • list_database_insights()                                      │ │
 │  │  • summarize_sql_statistics()                                    │ │
 │  │  • get_host_resource_forecast_trend()                           │ │
 │  │  • get_host_capacity_planning()                                 │ │
-│  │  • ... and 71 more tools                                        │ │
+│  │  • list_users() / list_tablespaces() [NEW v2.0]                │ │
+│  │  • ... and 110 more tools                                       │ │
 │  └───────────────────────────────────────────────────────────────────┘ │
 │                                 │                                       │
 │  ┌───────────────────────────────────────────────────────────────────┐ │
@@ -252,20 +259,38 @@ User Query: "Show databases in all regions"
 
 ## Features
 
-**Total: 75 MCP Tools for comprehensive OCI database operations**
+**Total: 117 MCP Tools for comprehensive OCI database operations** 📊
 
-### 🆕 NEW: Enhanced Multi-Tenancy & Advanced Analytics
-- **Multi-Profile Support** - Dynamic profile switching without environment variable changes
-- **SQL Plan Baseline Management** - Full CRUD operations for SQL plan baselines
-- **Advanced SQL Insights** - SQL performance insights with anomaly detection
-- **ADDM Findings** - Consolidated ADDM findings across database fleet
+### 🎉 What's New in v2.0 (November 2025)
 
-### 🆕 NEW: EM-Managed Database Support
-- **Automatic EM-Managed Detection** - Identifies Enterprise Manager-managed databases automatically
-- **Warehouse Query Fallback** - Transparent fallback to warehouse queries when direct APIs unavailable
-- **Clear Error Messages** - No more misleading "permission denied" errors for EM-Managed databases
-- **Actionable Alternatives** - Concrete solutions when data unavailable (warehouse, Database Management APIs)
-- **See [EM_MANAGED_DATABASES.md](./EM_MANAGED_DATABASES.md) for complete documentation**
+#### ✨ 18 New APIs
+- **Resource Statistics** (4 APIs) - Database resource monitoring and analytics
+- **User Management** (6 APIs) - User, role, and privilege auditing
+- **Tablespace Management** (3 APIs) - Storage monitoring and analysis
+- **AWR Metrics** (5 APIs) - Performance troubleshooting with wait events
+
+#### 🤖 Agent Detection & Prioritization
+- **Automatic agent type detection** - MACS, Cloud Agent, or EM Agent
+- **Priority classification** - 3-tier priority system (1=full API support, 3=limited)
+- **API compatibility matrix** - Know which APIs work with each agent type
+- **Migration recommendations** - Smart suggestions for EM-managed databases
+
+#### 👥 Enhanced Multi-Tenancy
+- **Interactive profile selection** - Choose OCI profile without environment changes
+- **7 new profile management tools** - Validate, compare, and switch profiles
+- **Multi-account support** - Manage production, staging, development simultaneously
+- **Profile-specific caching** - Separate cache per tenancy
+
+#### 📖 Complete Documentation (85% coverage)
+- **8 GitHub wiki pages** - Installation, configuration, troubleshooting
+- **API coverage report** - All 117 tools cataloged
+- **Read-only design** - Safe for production (no write operations)
+
+### 🆕 Previous Updates: EM-Managed Database Support
+- **Automatic EM-Managed Detection** - Identifies Enterprise Manager-managed databases
+- **Warehouse Query Fallback** - Transparent fallback when direct APIs unavailable
+- **Clear Error Messages** - No misleading "permission denied" errors
+- **Actionable Alternatives** - Concrete solutions (warehouse, Database Management APIs)
 
 ### Enhanced Profile Management Tools (11 tools) 🆕
 - **list_oci_profiles_enhanced()**: List all profiles with comprehensive validation

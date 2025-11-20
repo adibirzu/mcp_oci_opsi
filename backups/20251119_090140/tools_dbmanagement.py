@@ -377,15 +377,6 @@ def get_database_fleet_health_metrics(
     compare_type: str = "HOUR",
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 1 API returns 404 - Not available
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: list_managed_databases
-    
     Get aggregated fleet health metrics for all managed databases in a compartment.
 
     Args:

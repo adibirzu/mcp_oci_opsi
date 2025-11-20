@@ -1159,15 +1159,6 @@ def summarize_host_insight_disk_statistics(
     host_id: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 7 APIs return 404 - May require specific agent versions
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_host_insight_resource_usage_trend
-    
     Get disk I/O statistics for hosts.
 
     Provides detailed disk I/O metrics including read/write operations,
@@ -1236,15 +1227,6 @@ def summarize_host_insight_io_usage_trend(
     host_id: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 7 APIs return 404 - May require specific agent versions
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_host_insight_resource_usage_trend
-    
     Get I/O usage trends over time for hosts.
 
     Provides time-series data for I/O operations including reads, writes,
@@ -1312,15 +1294,6 @@ def summarize_host_insight_network_usage_trend(
     host_id: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 7 APIs return 404 - May require specific agent versions
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_host_insight_resource_usage_trend
-    
     Get network usage trends over time for hosts.
 
     Provides time-series data for network metrics including throughput,
@@ -1387,15 +1360,6 @@ def summarize_host_insight_storage_usage_trend(
     host_id: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 7 APIs return 404 - May require specific agent versions
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_host_insight_resource_usage_trend
-    
     Get storage usage trends over time for hosts.
 
     Provides time-series data for storage utilization including filesystem
@@ -1465,15 +1429,6 @@ def summarize_host_insight_top_processes_usage(
     limit: int = 10,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 7 APIs return 404 - May require specific agent versions
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_host_insight_resource_usage_trend
-    
     Get top resource-consuming processes on hosts.
 
     Identifies the top processes consuming CPU, memory, or other resources
@@ -1548,15 +1503,6 @@ def summarize_host_insight_top_processes_usage_trend(
     host_id: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 7 APIs return 404 - May require specific agent versions
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_host_insight_resource_usage_trend
-    
     Get trends for top resource-consuming processes over time.
 
     Provides time-series data for top processes to identify patterns and
@@ -1628,15 +1574,6 @@ def summarize_host_insight_host_recommendation(
     host_id: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 7 APIs return 404 - May require specific agent versions
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_host_insight_resource_usage_trend
-    
     Get AI-driven host configuration recommendations.
 
     Provides intelligent recommendations for host sizing, resource allocation,

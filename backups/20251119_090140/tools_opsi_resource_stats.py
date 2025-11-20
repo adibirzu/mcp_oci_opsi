@@ -7,31 +7,6 @@ import oci
 from .oci_clients import get_opsi_client, extract_region_from_ocid
 
 
-
-# ============================================================================
-# DEPRECATION NOTICE
-# ============================================================================
-#
-# MODULE DEPRECATED: v2.0 Database Resource Statistics
-#
-# All APIs in this module return 404 errors and are not available in OCI.
-#
-# Reason: All 4 APIs return 404 - Not available in OCI service
-#
-# Status: APIs exist in SDK but not deployed to OCI service (as of Nov 2025)
-#
-# Validation: Tested across multiple regions and database types
-# - Phoenix (us-phoenix-1): 404
-# - London (uk-london-1): 404
-# - Autonomous Databases: 404
-# - MACS-Managed Databases: 404
-# - Agent-Based Databases: 404
-#
-# Recommendation: Do not use these APIs until Oracle confirms deployment.
-#
-# See: API_VALIDATION_SUMMARY.md for details and alternatives
-# ============================================================================
-
 def summarize_database_insight_resource_statistics(
     compartment_id: str,
     resource_metric: str = "CPU",
@@ -42,15 +17,6 @@ def summarize_database_insight_resource_statistics(
     profile: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: All 4 APIs return 404 - Not available in OCI service
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_database_insight_resource_capacity_trend, summarize_database_insight_resource_forecast
-    
     Get resource statistics summary for database insights.
 
     Provides aggregated statistics (min, max, avg, usage change) for specified
@@ -178,15 +144,6 @@ def summarize_database_insight_resource_usage(
     profile: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: All 4 APIs return 404 - Not available in OCI service
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_database_insight_resource_capacity_trend, summarize_database_insight_resource_forecast
-    
     Get historical resource usage data for database insights.
 
     Provides time-series usage data for capacity planning and trend analysis.
@@ -294,15 +251,6 @@ def summarize_database_insight_resource_utilization_insight(
     profile: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: All 4 APIs return 404 - Not available in OCI service
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_database_insight_resource_capacity_trend, summarize_database_insight_resource_forecast
-    
     Get resource utilization insights with trend analysis and forecasts.
 
     Provides advanced analytics including pattern detection, anomalies,
@@ -412,15 +360,6 @@ def summarize_database_insight_tablespace_usage_trend(
     profile: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: All 4 APIs return 404 - Not available in OCI service
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
-    **Alternatives**: summarize_database_insight_resource_capacity_trend, summarize_database_insight_resource_forecast
-    
     Get tablespace usage trends over time.
 
     Tracks tablespace growth patterns and capacity planning data.

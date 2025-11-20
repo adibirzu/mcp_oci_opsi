@@ -1,0 +1,777 @@
+{
+  "summary": {
+    "total": 68,
+    "success": 19,
+    "api_errors": 14,
+    "sdk_errors": 0,
+    "success_rate": "27.9%"
+  },
+  "by_module": {
+    "tools_opsi": {
+      "success": 1,
+      "failed": 2
+    },
+    "tools_opsi_extended": {
+      "success": 11,
+      "failed": 8
+    },
+    "tools_opsi_resource_stats": {
+      "success": 0,
+      "failed": 4
+    },
+    "tools_opsi_sql_insights": {
+      "success": 0,
+      "failed": 4
+    },
+    "tools_database_discovery": {
+      "success": 2,
+      "failed": 1
+    },
+    "tools_database_registration": {
+      "success": 0,
+      "failed": 7
+    },
+    "tools_profile_management": {
+      "success": 4,
+      "failed": 3
+    },
+    "tools_dbmanagement": {
+      "success": 1,
+      "failed": 6
+    },
+    "tools_dbmanagement_users": {
+      "success": 0,
+      "failed": 6
+    },
+    "tools_dbmanagement_tablespaces": {
+      "success": 0,
+      "failed": 3
+    },
+    "tools_dbmanagement_awr_metrics": {
+      "success": 0,
+      "failed": 5
+    }
+  },
+  "results": [
+    {
+      "module": "tools_opsi",
+      "function": "list_database_insights",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 7,
+      "notes": [
+        "Returned 7 items"
+      ]
+    },
+    {
+      "module": "tools_opsi",
+      "function": "list_sql_texts",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_sql_texts() missing 2 required positional arguments: 'time_start' and 'time_end'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_opsi",
+      "function": "query_warehouse_standard",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "query_warehouse_standard() missing 1 required positional argument: 'statement'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "get_sql_plan",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_sql_plan() missing 2 required positional arguments: 'sql_identifier' and 'plan_hash'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "list_exadata_insights",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "list_host_insights",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 7,
+      "notes": [
+        "Returned 7 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_database_insight_resource_capacity_trend",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_database_insight_resource_forecast",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_disk_statistics",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "OperationsInsightsClient.summarize_host_insight_disk_statistics() missing 1 required positional argument: 'id'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_host_recommendation",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "OperationsInsightsClient.summarize_host_insight_host_recommendation() missing 1 required positional argument: 'id'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_io_usage_trend",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "OperationsInsightsClient.summarize_host_insight_io_usage_trend() missing 1 required positional argument: 'id'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_network_usage_trend",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "OperationsInsightsClient.summarize_host_insight_network_usage_trend() missing 1 required positional argument: 'id'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_resource_capacity_trend",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_resource_forecast_trend",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_resource_statistics",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 7,
+      "notes": [
+        "Returned 7 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_resource_usage",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_resource_usage_trend",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 169,
+      "notes": [
+        "Returned 169 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_resource_utilization_insight",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_storage_usage_trend",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "OperationsInsightsClient.summarize_host_insight_storage_usage_trend() missing 1 required positional argument: 'id'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_top_processes_usage",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "OperationsInsightsClient.summarize_host_insight_top_processes_usage() missing 2 required positional arguments: 'id' and 'timestamp'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_host_insight_top_processes_usage_trend",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "OperationsInsightsClient.summarize_host_insight_top_processes_usage_trend() missing 1 required positional argument: 'id'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_extended",
+      "function": "summarize_sql_statistics",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 30,
+      "notes": [
+        "Returned 30 items"
+      ]
+    },
+    {
+      "module": "tools_opsi_resource_stats",
+      "function": "summarize_database_insight_resource_statistics",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "module 'oci.opsi.models' has no attribute 'SummarizeDatabaseInsightResourceStatisticsDetails'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_resource_stats",
+      "function": "summarize_database_insight_resource_usage",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "'SummarizeDatabaseInsightResourceUsageAggregation' object has no attribute 'items'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_resource_stats",
+      "function": "summarize_database_insight_resource_utilization_insight",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "'SummarizeDatabaseInsightResourceUtilizationInsightAggregation' object has no attribute 'items'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_resource_stats",
+      "function": "summarize_database_insight_tablespace_usage_trend",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "{'target_service': 'operations_insights', 'status': 400, 'code': 'InvalidParameter', 'opc-request-id': 'C9EAC9BCD2F546E5AABA489ED219AB48/286C13C1573735AC11691D694C4852CA/6723B0722ECD7CF96B4D6E02AF9C7A",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_sql_insights",
+      "function": "get_sql_insight_details",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_sql_insight_details() missing 2 required positional arguments: 'sql_identifier' and 'database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_opsi_sql_insights",
+      "function": "summarize_addm_db_findings",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "{'target_service': 'operations_insights', 'status': 400, 'code': 'InvalidParameter', 'opc-request-id': 'BA7DA79043D442A083117FDB27978DD6/00B7C6A893F1EA1B12691D694C485208/7ABD014522EBB79E3B1164730A830A",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_sql_insights",
+      "function": "summarize_sql_insights",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "cannot import name 'SummarizeSqlInsightsDetails' from 'oci.opsi.models' (/Users/abirzu/dev/mcp_oci_opsi/.venv/lib/python3.13/site-packages/oci/opsi/models/__init__.py)",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_opsi_sql_insights",
+      "function": "summarize_sql_plan_insights",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "summarize_sql_plan_insights() missing 1 required positional argument: 'sql_identifier'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_database_discovery",
+      "function": "get_available_oci_profiles",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_database_discovery",
+      "function": "get_database_api_compatibility",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_database_api_compatibility() missing 1 required positional argument: 'database_insight_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_database_discovery",
+      "function": "list_database_insights_by_management_type",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_database_registration",
+      "function": "change_database_insight_compartment",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "change_database_insight_compartment() missing 2 required positional arguments: 'database_insight_id' and 'target_compartment_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_database_registration",
+      "function": "disable_database_insight",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "disable_database_insight() missing 1 required positional argument: 'database_insight_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_database_registration",
+      "function": "enable_database_insight",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "enable_database_insight() missing 1 required positional argument: 'database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_database_registration",
+      "function": "enable_database_management",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "enable_database_management() missing 3 required positional arguments: 'database_id', 'service_name', and 'credential_details'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_database_registration",
+      "function": "get_database_details_from_ocid",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_database_details_from_ocid() missing 1 required positional argument: 'database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_database_registration",
+      "function": "get_database_insight_status",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_database_insight_status() missing 1 required positional argument: 'database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_database_registration",
+      "function": "update_database_insight",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "update_database_insight() missing 1 required positional argument: 'database_insight_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_profile_management",
+      "function": "compare_oci_profiles",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "compare_oci_profiles() missing 1 required positional argument: 'profiles'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_profile_management",
+      "function": "get_current_profile_info",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_profile_management",
+      "function": "get_oci_profile_details",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_oci_profile_details() missing 1 required positional argument: 'profile'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_profile_management",
+      "function": "get_profile_tenancy_details",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_profile_management",
+      "function": "list_oci_profiles_enhanced",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 3,
+      "notes": [
+        "Returned 3 items"
+      ]
+    },
+    {
+      "module": "tools_profile_management",
+      "function": "refresh_profile_cache",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_profile_management",
+      "function": "validate_oci_profile",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "validate_oci_profile() missing 1 required positional argument: 'profile'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement",
+      "function": "get_awr_db_report",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_awr_db_report() missing 4 required positional arguments: 'database_id', 'awr_db_id', 'begin_snapshot_id', and 'end_snapshot_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement",
+      "function": "get_database_fleet_health_metrics",
+      "status": "API_ERROR",
+      "error_type": null,
+      "error_message": "DbManagementClient.get_database_fleet_health_metrics() missing 2 required positional arguments: 'compare_baseline_time' and 'compare_target_time'",
+      "response_count": 0,
+      "notes": []
+    },
+    {
+      "module": "tools_dbmanagement",
+      "function": "get_database_parameters",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_database_parameters() missing 1 required positional argument: 'database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement",
+      "function": "get_managed_database",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_managed_database() missing 1 required positional argument: 'database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement",
+      "function": "get_tablespace_usage",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_tablespace_usage() missing 1 required positional argument: 'database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement",
+      "function": "list_awr_db_snapshots",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_awr_db_snapshots() missing 2 required positional arguments: 'database_id' and 'awr_db_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement",
+      "function": "list_managed_databases",
+      "status": "SUCCESS",
+      "error_type": null,
+      "error_message": null,
+      "response_count": 0,
+      "notes": [
+        "Returned 0 items"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_users",
+      "function": "get_user",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_user() missing 2 required positional arguments: 'managed_database_id' and 'user_name'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_users",
+      "function": "list_consumer_group_privileges",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_consumer_group_privileges() missing 2 required positional arguments: 'managed_database_id' and 'user_name'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_users",
+      "function": "list_proxy_users",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_proxy_users() missing 2 required positional arguments: 'managed_database_id' and 'user_name'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_users",
+      "function": "list_roles",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_roles() missing 1 required positional argument: 'managed_database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_users",
+      "function": "list_system_privileges",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_system_privileges() missing 2 required positional arguments: 'managed_database_id' and 'user_name'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_users",
+      "function": "list_users",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_users() missing 1 required positional argument: 'managed_database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_tablespaces",
+      "function": "get_tablespace",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "get_tablespace() missing 2 required positional arguments: 'managed_database_id' and 'tablespace_name'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_tablespaces",
+      "function": "list_table_statistics",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_table_statistics() missing 1 required positional argument: 'managed_database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_tablespaces",
+      "function": "list_tablespaces",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "list_tablespaces() missing 1 required positional argument: 'managed_database_id'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_awr_metrics",
+      "function": "summarize_awr_db_cpu_usages",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "summarize_awr_db_cpu_usages() missing 3 required positional arguments: 'managed_database_id', 'time_greater_than_or_equal_to', and 'time_less_than_or_equal_to'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_awr_metrics",
+      "function": "summarize_awr_db_metrics",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "summarize_awr_db_metrics() missing 3 required positional arguments: 'managed_database_id', 'time_greater_than_or_equal_to', and 'time_less_than_or_equal_to'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_awr_metrics",
+      "function": "summarize_awr_db_parameter_changes",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "summarize_awr_db_parameter_changes() missing 3 required positional arguments: 'managed_database_id', 'time_greater_than_or_equal_to', and 'time_less_than_or_equal_to'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_awr_metrics",
+      "function": "summarize_awr_db_sysstats",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "summarize_awr_db_sysstats() missing 3 required positional arguments: 'managed_database_id', 'time_greater_than_or_equal_to', and 'time_less_than_or_equal_to'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    },
+    {
+      "module": "tools_dbmanagement_awr_metrics",
+      "function": "summarize_awr_db_wait_event_buckets",
+      "status": "PARAMETER_ERROR",
+      "error_type": "TypeError",
+      "error_message": "summarize_awr_db_wait_event_buckets() missing 3 required positional arguments: 'managed_database_id', 'time_greater_than_or_equal_to', and 'time_less_than_or_equal_to'",
+      "response_count": 0,
+      "notes": [
+        "Invalid/missing parameters"
+      ]
+    }
+  ]
+}

@@ -15,13 +15,6 @@ def summarize_sql_insights(
     database_time_pct_greater_than: Optional[float] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 2 APIs return 404 - Not available
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
     Get SQL performance insights with anomaly detection.
 
     Analyzes SQL statements that are consuming significant database time and
@@ -255,13 +248,6 @@ def summarize_addm_db_findings(
     freeform_tag_equals: Optional[dict] = None,
 ) -> dict[str, Any]:
     """
-
-    **DEPRECATED**: This API returns 404 errors and is not available in OCI.
-
-    **Reason**: 2 APIs return 404 - Not available
-
-    **Status**: Not deployed to OCI service (as of Nov 2025)
-    
     Get consolidated ADDM (Automatic Database Diagnostic Monitor) findings.
 
     ADDM analyzes AWR data and provides recommendations for performance
