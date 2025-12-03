@@ -10,6 +10,34 @@ MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operat
 
 ---
 
+## Screenshots
+
+### Fleet Summary - Instant Overview
+
+Get a complete overview of your database fleet with zero API calls:
+
+![Fleet Summary](Screenshots/fleet.png)
+
+*Fleet overview showing database counts, types, and compartment distribution - instant response from local cache*
+
+### Database Search Results
+
+Search and discover databases across your tenancy instantly:
+
+![Database List](Screenshots/dbs.png)
+
+*Comprehensive database list with OCIDs, types, and compartments - cached for instant queries*
+
+### Database Details
+
+Get detailed information about any specific database:
+
+![Database Details](Screenshots/ecreditsDB.png)
+
+*Detailed database information including OCID, type, compartment, and status - instant lookup from cache*
+
+---
+
 ## What's New in v3.0
 
 | Feature | Description |
@@ -251,6 +279,12 @@ docker run -d \
 "Run daily health check"
 ```
 
+#### Example: Fleet Summary Response
+
+Ask "Show me a summary of my database fleet" and get instant results:
+
+![Fleet Summary Example](Screenshots/fleet.png)
+
 ---
 
 ## OCI VM Deployment
@@ -312,6 +346,17 @@ See [docs/OCI_VM_DEPLOYMENT.md](./docs/OCI_VM_DEPLOYMENT.md) for:
 | `cache_build_database_cache` | Build/rebuild cache |
 | `cache_refresh_cache_if_needed` | Check and refresh cache |
 | `cache_get_database_by_id` | Get database by OCID |
+
+<details>
+<summary>Cache Tools Examples (click to expand)</summary>
+
+**Database Search:**
+![Database Search](Screenshots/dbs.png)
+
+**Database Details:**
+![Database Details](Screenshots/ecreditsDB.png)
+
+</details>
 
 ### OPSI Tools (Operations Insights)
 
