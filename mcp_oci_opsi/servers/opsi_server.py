@@ -2,13 +2,22 @@
 
 This server provides tools for Oracle Cloud Infrastructure Operations Insights,
 including SQL analytics, capacity planning, and ADDM findings.
+
+Follows MCP Best Practices:
+- Tool annotations for hints (readOnlyHint, destructiveHint, etc.)
+- Standard pagination with has_more, next_offset, total_count
+- Consistent naming: opsi_{action}_{resource}
+- Examples in docstrings
+
+Rate Limits: OCI API limits apply (~100 requests/minute)
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 from datetime import datetime, timedelta
 
 from fastmcp import FastMCP, Context
 from fastmcp.exceptions import ToolError
+from fastmcp.tools.tool import ToolAnnotations
 
 from ..oci_clients import get_opsi_client, list_all, extract_region_from_ocid
 
@@ -20,6 +29,9 @@ opsi_server = FastMCP(
     Operations Insights tools provide database analytics and monitoring.
     Use these tools for SQL performance analysis, capacity planning,
     ADDM findings, and fleet-wide insights.
+
+    Rate Limits: OCI API limits apply (~100 requests/minute).
+    All tools make API calls to OCI Operations Insights service.
     """,
 )
 
@@ -31,12 +43,21 @@ def _get_time_range(days_back: int = 7) -> tuple:
     return start_time, end_time
 
 
-@opsi_server.tool
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def list_database_insights(
     compartment_id: str,
     database_type: Optional[str] = None,
     status: Optional[str] = None,
     limit: int = 50,
+    offset: int = 0,
+    format: Literal["json", "markdown"] = "json",
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -44,12 +65,19 @@ async def list_database_insights(
 
     Args:
         compartment_id: Compartment OCID
-        database_type: Filter by type (e.g., "EXTERNAL-NONCDB", "ATP-D")
+        database_type: Filter by type (e.g., "EXTERNAL-NONCDB", "ATP-D", "ADW-D")
         status: Filter by status (e.g., "ENABLED", "DISABLED")
-        limit: Maximum results
+        limit: Maximum results per page (default 50, max 100)
+        offset: Number of results to skip for pagination
+        format: Output format - "json" (default) or "markdown"
 
     Returns:
-        List of database insights with details
+        List of database insights with pagination metadata
+
+    Examples:
+        - list_database_insights(compartment_id="ocid1...") - List all in compartment
+        - list_database_insights(compartment_id="ocid1...", status="ENABLED") - Only enabled
+        - list_database_insights(compartment_id="ocid1...", database_type="ATP-D") - Only ATP
     """
     if ctx:
         await ctx.info(f"Listing database insights in compartment")
@@ -57,16 +85,20 @@ async def list_database_insights(
     try:
         opsi_client = get_opsi_client()
 
-        kwargs = {"compartment_id": compartment_id, "limit": limit}
+        kwargs = {"compartment_id": compartment_id, "limit": min(limit + offset, 1000)}
         if database_type:
             kwargs["database_type"] = [database_type]
         if status:
             kwargs["status"] = [status]
 
-        results = list_all(opsi_client.list_database_insights, **kwargs)
+        all_results = list_all(opsi_client.list_database_insights, **kwargs)
+        total_count = len(all_results)
+
+        # Apply pagination
+        paginated = all_results[offset:offset + limit]
 
         databases = []
-        for db in results[:limit]:
+        for db in paginated:
             databases.append({
                 "id": db.id,
                 "database_id": getattr(db, "database_id", None),
@@ -78,17 +110,50 @@ async def list_database_insights(
                 "lifecycle_state": db.lifecycle_state,
             })
 
-        return {
+        data = {
             "databases": databases,
             "count": len(databases),
             "compartment_id": compartment_id,
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
         }
+
+        if format == "markdown":
+            md = f"""## Database Insights
+
+**Compartment:** `{compartment_id[:30]}...`
+**Total:** {total_count} | **Showing:** {offset + 1} - {offset + len(databases)}
+
+| Name | Type | Status | Version |
+|------|------|--------|---------|
+"""
+            for db in databases:
+                md += f"| {db.get('database_name', 'N/A')} | {db.get('database_type', 'N/A')} | {db.get('status', 'N/A')} | {db.get('database_version', 'N/A')} |\n"
+
+            if data["pagination"]["has_more"]:
+                md += f"\n*Use offset={data['pagination']['next_offset']} for next page*"
+
+            return {"markdown": md, "data": data}
+
+        return data
 
     except Exception as e:
         raise ToolError(f"Failed to list database insights: {e}")
 
 
-@opsi_server.tool
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def summarize_sql_insights(
     compartment_id: str,
     database_id: Optional[str] = None,
@@ -110,6 +175,11 @@ async def summarize_sql_insights(
 
     Returns:
         SQL insights with anomalies and trends
+
+    Examples:
+        - summarize_sql_insights(compartment_id="ocid1...") - All SQL insights
+        - summarize_sql_insights(compartment_id="ocid1...", days_back=30) - Last 30 days
+        - summarize_sql_insights(compartment_id="ocid1...", database_id="ocid1...") - Specific DB
     """
     if ctx:
         await ctx.info("Analyzing SQL insights for anomalies...")
@@ -155,7 +225,14 @@ async def summarize_sql_insights(
         raise ToolError(f"Failed to get SQL insights: {e}")
 
 
-@opsi_server.tool
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def summarize_sql_plan_insights(
     compartment_id: str,
     sql_identifier: str,
@@ -175,6 +252,10 @@ async def summarize_sql_plan_insights(
 
     Returns:
         Plan insights including changes and performance comparison
+
+    Examples:
+        - summarize_sql_plan_insights(compartment_id="ocid1...", sql_identifier="abc123")
+        - summarize_sql_plan_insights(..., days_back=30) - Analyze last 30 days
     """
     if ctx:
         await ctx.info(f"Analyzing SQL plan insights for {sql_identifier}")
@@ -203,11 +284,20 @@ async def summarize_sql_plan_insights(
         raise ToolError(f"Failed to get SQL plan insights: {e}")
 
 
-@opsi_server.tool
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def summarize_addm_db_findings(
     compartment_id: str,
     database_id: Optional[str] = None,
     days_back: int = 7,
+    limit: int = 50,
+    offset: int = 0,
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -220,9 +310,16 @@ async def summarize_addm_db_findings(
         compartment_id: Compartment OCID
         database_id: Optional specific database
         days_back: Number of days to analyze
+        limit: Maximum findings to return
+        offset: Number of findings to skip
 
     Returns:
-        ADDM findings with recommendations and impact
+        ADDM findings with recommendations, impact, and pagination
+
+    Examples:
+        - summarize_addm_db_findings(compartment_id="ocid1...") - All findings
+        - summarize_addm_db_findings(compartment_id="ocid1...", database_id="ocid1...") - Specific DB
+        - summarize_addm_db_findings(compartment_id="ocid1...", days_back=30) - Last 30 days
     """
     if ctx:
         await ctx.info("Getting ADDM findings...")
@@ -242,10 +339,10 @@ async def summarize_addm_db_findings(
 
         response = opsi_client.summarize_addm_db_findings(**kwargs)
 
-        findings = []
+        all_findings = []
         if hasattr(response.data, 'items'):
             for item in response.data.items:
-                findings.append({
+                all_findings.append({
                     "finding_id": getattr(item, 'id', None),
                     "category": getattr(item, 'category_name', None),
                     "finding": getattr(item, 'finding_name', None),
@@ -253,9 +350,19 @@ async def summarize_addm_db_findings(
                     "recommendation": getattr(item, 'recommendation', None),
                 })
 
+        total_count = len(all_findings)
+        paginated = all_findings[offset:offset + limit]
+
         return {
-            "findings": findings,
-            "count": len(findings),
+            "findings": paginated,
+            "count": len(paginated),
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
             "time_range": {
                 "start": start_time.isoformat(),
                 "end": end_time.isoformat(),
@@ -266,7 +373,14 @@ async def summarize_addm_db_findings(
         raise ToolError(f"Failed to get ADDM findings: {e}")
 
 
-@opsi_server.tool
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def get_database_resource_forecast(
     compartment_id: str,
     resource_metric: str = "CPU",
@@ -287,6 +401,11 @@ async def get_database_resource_forecast(
 
     Returns:
         Resource forecast with predictions and trends
+
+    Examples:
+        - get_database_resource_forecast(compartment_id="ocid1...") - CPU forecast
+        - get_database_resource_forecast(..., resource_metric="STORAGE") - Storage forecast
+        - get_database_resource_forecast(..., forecast_days=90) - 90-day forecast
     """
     if ctx:
         await ctx.info(f"Generating {resource_metric} forecast for {forecast_days} days...")
@@ -328,7 +447,14 @@ async def get_database_resource_forecast(
         raise ToolError(f"Failed to get resource forecast: {e}")
 
 
-@opsi_server.tool
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def get_database_capacity_trend(
     compartment_id: str,
     resource_metric: str = "CPU",
@@ -349,6 +475,11 @@ async def get_database_capacity_trend(
 
     Returns:
         Capacity trend data with historical utilization
+
+    Examples:
+        - get_database_capacity_trend(compartment_id="ocid1...") - CPU trend
+        - get_database_capacity_trend(..., resource_metric="MEMORY") - Memory trend
+        - get_database_capacity_trend(..., days_back=90) - 90-day history
     """
     if ctx:
         await ctx.info(f"Getting {resource_metric} capacity trend...")
@@ -383,11 +514,20 @@ async def get_database_capacity_trend(
         raise ToolError(f"Failed to get capacity trend: {e}")
 
 
-@opsi_server.tool
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def list_host_insights(
     compartment_id: str,
     status: Optional[str] = None,
     limit: int = 50,
+    offset: int = 0,
+    format: Literal["json", "markdown"] = "json",
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -396,10 +536,17 @@ async def list_host_insights(
     Args:
         compartment_id: Compartment OCID
         status: Filter by status (ENABLED, DISABLED)
-        limit: Maximum results
+        limit: Maximum results per page (default 50)
+        offset: Number of results to skip for pagination
+        format: Output format - "json" (default) or "markdown"
 
     Returns:
-        List of host insights with details
+        List of host insights with pagination metadata
+
+    Examples:
+        - list_host_insights(compartment_id="ocid1...") - All hosts
+        - list_host_insights(compartment_id="ocid1...", status="ENABLED") - Only enabled
+        - list_host_insights(compartment_id="ocid1...", limit=10, offset=10) - Page 2
     """
     if ctx:
         await ctx.info("Listing host insights...")
@@ -407,14 +554,16 @@ async def list_host_insights(
     try:
         opsi_client = get_opsi_client()
 
-        kwargs = {"compartment_id": compartment_id, "limit": limit}
+        kwargs = {"compartment_id": compartment_id, "limit": min(limit + offset, 1000)}
         if status:
             kwargs["status"] = [status]
 
-        results = list_all(opsi_client.list_host_insights, **kwargs)
+        all_results = list_all(opsi_client.list_host_insights, **kwargs)
+        total_count = len(all_results)
+        paginated = all_results[offset:offset + limit]
 
         hosts = []
-        for host in results[:limit]:
+        for host in paginated:
             hosts.append({
                 "id": host.id,
                 "host_name": getattr(host, "host_name", None),
@@ -425,19 +574,53 @@ async def list_host_insights(
                 "lifecycle_state": host.lifecycle_state,
             })
 
-        return {
+        data = {
             "hosts": hosts,
             "count": len(hosts),
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
         }
+
+        if format == "markdown":
+            md = f"""## Host Insights
+
+**Total:** {total_count} | **Showing:** {offset + 1} - {offset + len(hosts)}
+
+| Host Name | Type | Platform | Status |
+|-----------|------|----------|--------|
+"""
+            for host in hosts:
+                md += f"| {host.get('host_name', 'N/A')} | {host.get('host_type', 'N/A')} | {host.get('platform_type', 'N/A')} | {host.get('status', 'N/A')} |\n"
+
+            if data["pagination"]["has_more"]:
+                md += f"\n*Use offset={data['pagination']['next_offset']} for next page*"
+
+            return {"markdown": md, "data": data}
+
+        return data
 
     except Exception as e:
         raise ToolError(f"Failed to list host insights: {e}")
 
 
-@opsi_server.tool
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def get_host_resource_statistics(
     compartment_id: str,
     resource_metric: str = "CPU",
+    limit: int = 50,
+    offset: int = 0,
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -446,9 +629,16 @@ async def get_host_resource_statistics(
     Args:
         compartment_id: Compartment OCID
         resource_metric: Metric (CPU, MEMORY, STORAGE, NETWORK)
+        limit: Maximum results per page
+        offset: Number of results to skip
 
     Returns:
-        Host resource statistics with utilization
+        Host resource statistics with utilization and pagination
+
+    Examples:
+        - get_host_resource_statistics(compartment_id="ocid1...") - CPU stats
+        - get_host_resource_statistics(..., resource_metric="MEMORY") - Memory stats
+        - get_host_resource_statistics(..., limit=10) - Top 10 hosts
     """
     if ctx:
         await ctx.info(f"Getting host {resource_metric} statistics...")
@@ -464,20 +654,30 @@ async def get_host_resource_statistics(
             time_interval_end=end_time,
         )
 
-        items = []
+        all_items = []
         if hasattr(response.data, 'items'):
             for item in response.data.items:
-                items.append({
+                all_items.append({
                     "host_name": getattr(item, 'host_name', None),
                     "usage": getattr(item, 'usage', None),
                     "capacity": getattr(item, 'capacity', None),
                     "utilization_percent": getattr(item, 'utilization_percent', None),
                 })
 
+        total_count = len(all_items)
+        paginated = all_items[offset:offset + limit]
+
         return {
             "resource_metric": resource_metric,
-            "hosts": items,
-            "count": len(items),
+            "hosts": paginated,
+            "count": len(paginated),
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
         }
 
     except Exception as e:

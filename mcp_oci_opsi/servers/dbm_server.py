@@ -2,13 +2,19 @@
 
 This server provides tools for Oracle Cloud Infrastructure Database Management,
 including AWR reports, ADDM, tablespace management, and user administration.
+
+Follows MCP Best Practices:
+- Tool annotations for hints (readOnlyHint, destructiveHint, etc.)
+- Standard pagination with has_more, next_offset, total_count
+- Consistent naming: dbm_{action}_{resource}
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 from datetime import datetime, timedelta
 
 from fastmcp import FastMCP, Context
 from fastmcp.exceptions import ToolError
+from fastmcp.tools.tool import ToolAnnotations
 
 from ..oci_clients import get_dbm_client, list_all
 
@@ -20,15 +26,27 @@ dbm_server = FastMCP(
     Database Management tools provide monitoring and administration capabilities.
     Use these tools for AWR reports, ADDM analysis, tablespace management,
     user/role auditing, and SQL plan baselines.
+
+    Performance: Operations make OCI API calls, response time depends on database size.
+    Rate Limits: Subject to OCI API limits (~100/minute).
     """,
 )
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def list_managed_databases(
     compartment_id: str,
     management_option: Optional[str] = None,
     limit: int = 50,
+    offset: int = 0,
+    format: Literal["json", "markdown"] = "json",
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -37,10 +55,17 @@ async def list_managed_databases(
     Args:
         compartment_id: Compartment OCID
         management_option: Filter by management option (BASIC, ADVANCED)
-        limit: Maximum results
+        limit: Maximum results per page (default 50)
+        offset: Number of results to skip for pagination
+        format: Output format - "json" (default) or "markdown"
 
     Returns:
-        List of managed databases with details
+        List of managed databases with pagination metadata
+
+    Examples:
+        - list_managed_databases(compartment_id="ocid1...") - List all
+        - list_managed_databases(compartment_id="ocid1...", management_option="ADVANCED") - Filter by management option
+        - list_managed_databases(compartment_id="ocid1...", offset=50, limit=50) - Page 2
     """
     if ctx:
         await ctx.info("Listing managed databases...")
@@ -48,14 +73,18 @@ async def list_managed_databases(
     try:
         dbm_client = get_dbm_client()
 
-        kwargs = {"compartment_id": compartment_id, "limit": limit}
+        kwargs = {"compartment_id": compartment_id, "limit": 1000}  # Get all for pagination
         if management_option:
             kwargs["management_option"] = management_option
 
-        results = list_all(dbm_client.list_managed_databases, **kwargs)
+        all_results = list_all(dbm_client.list_managed_databases, **kwargs)
+        total_count = len(all_results)
+
+        # Apply pagination
+        paginated_results = all_results[offset:offset + limit]
 
         databases = []
-        for db in results[:limit]:
+        for db in paginated_results:
             databases.append({
                 "id": db.id,
                 "name": db.name,
@@ -67,18 +96,52 @@ async def list_managed_databases(
                 "time_created": str(getattr(db, "time_created", None)),
             })
 
-        return {
+        data = {
             "databases": databases,
             "count": len(databases),
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
         }
+
+        if format == "markdown":
+            md = f"""## Managed Databases
+
+**Total:** {total_count}
+**Showing:** {offset + 1} - {offset + len(databases)}
+
+| Name | Type | Management | Workload |
+|------|------|------------|----------|
+"""
+            for db in databases:
+                md += f"| {db['name']} | {db['database_type'] or 'N/A'} | {db['management_option'] or 'N/A'} | {db['workload_type'] or 'N/A'} |\n"
+
+            if data["pagination"]["has_more"]:
+                md += f"\n*Use offset={data['pagination']['next_offset']} to see more*"
+
+            return {"markdown": md, "data": data}
+
+        return data
 
     except Exception as e:
         raise ToolError(f"Failed to list managed databases: {e}")
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def get_tablespace_usage(
     managed_database_id: str,
+    format: Literal["json", "markdown"] = "json",
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -88,9 +151,15 @@ async def get_tablespace_usage(
 
     Args:
         managed_database_id: Managed database OCID
+        format: Output format - "json" (default) or "markdown"
 
     Returns:
         Tablespace usage with size, used, and free space
+
+    Examples:
+        - get_tablespace_usage(managed_database_id="ocid1...") - Get JSON
+        - get_tablespace_usage(managed_database_id="ocid1...", format="markdown") - Human-readable
+        - Use to identify tablespaces approaching capacity (warnings list)
     """
     if ctx:
         await ctx.info("Getting tablespace usage...")
@@ -128,7 +197,7 @@ async def get_tablespace_usage(
         total_allocated = sum(t['allocated_size_kb'] for t in tablespaces)
         total_used = sum(t['used_size_kb'] for t in tablespaces)
 
-        return {
+        data = {
             "tablespaces": tablespaces,
             "count": len(tablespaces),
             "summary": {
@@ -140,15 +209,47 @@ async def get_tablespace_usage(
             "warnings": [t['name'] for t in tablespaces if t['usage_percent'] > 80],
         }
 
+        if format == "markdown":
+            summary = data["summary"]
+            md = f"""## Tablespace Usage
+
+**Total Allocated:** {summary['total_allocated_gb']} GB
+**Total Used:** {summary['total_used_gb']} GB
+**Total Free:** {summary['total_free_gb']} GB
+**Overall Usage:** {summary['overall_usage_percent']}%
+
+| Tablespace | Status | Allocated (KB) | Used (KB) | Usage % |
+|------------|--------|----------------|-----------|---------|
+"""
+            for ts in tablespaces[:20]:  # Limit for readability
+                status_icon = "⚠️ " if ts['usage_percent'] > 80 else ""
+                md += f"| {status_icon}{ts['name']} | {ts['status'] or 'N/A'} | {ts['allocated_size_kb']:,} | {ts['used_size_kb']:,} | {ts['usage_percent']}% |\n"
+
+            if data["warnings"]:
+                md += f"\n**Warnings (>80% used):** {', '.join(data['warnings'])}"
+
+            return {"markdown": md, "data": data}
+
+        return data
+
     except Exception as e:
         raise ToolError(f"Failed to get tablespace usage: {e}")
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def list_awr_snapshots(
     managed_database_id: str,
     awr_db_id: str,
     days_back: int = 7,
+    limit: int = 50,
+    offset: int = 0,
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -157,10 +258,17 @@ async def list_awr_snapshots(
     Args:
         managed_database_id: Managed database OCID
         awr_db_id: AWR database ID (DBID)
-        days_back: Number of days of snapshots
+        days_back: Number of days of snapshots (default 7)
+        limit: Maximum results per page (default 50)
+        offset: Number of results to skip for pagination
 
     Returns:
         List of AWR snapshots with IDs and timestamps
+
+    Examples:
+        - list_awr_snapshots(managed_database_id="ocid1...", awr_db_id="123456") - Last 7 days
+        - list_awr_snapshots(..., days_back=30) - Last 30 days
+        - Use snapshot IDs for get_awr_report() or get_addm_report()
     """
     if ctx:
         await ctx.info("Listing AWR snapshots...")
@@ -178,10 +286,10 @@ async def list_awr_snapshots(
             time_less_than_or_equal_to=end_time,
         )
 
-        snapshots = []
+        all_snapshots = []
         if hasattr(response.data, 'items'):
             for snap in response.data.items:
-                snapshots.append({
+                all_snapshots.append({
                     "snapshot_id": snap.snapshot_id,
                     "instance_number": getattr(snap, 'instance_number', None),
                     "time_db_startup": str(getattr(snap, 'time_db_startup', None)),
@@ -189,9 +297,19 @@ async def list_awr_snapshots(
                     "time_end": str(getattr(snap, 'time_end', None)),
                 })
 
+        total_count = len(all_snapshots)
+        paginated = all_snapshots[offset:offset + limit]
+
         return {
-            "snapshots": snapshots,
-            "count": len(snapshots),
+            "snapshots": paginated,
+            "count": len(paginated),
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
             "time_range": {
                 "start": start_time.isoformat(),
                 "end": end_time.isoformat(),
@@ -202,7 +320,14 @@ async def list_awr_snapshots(
         raise ToolError(f"Failed to list AWR snapshots: {e}")
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def get_awr_report(
     managed_database_id: str,
     awr_db_id: str,
@@ -219,10 +344,15 @@ async def get_awr_report(
         awr_db_id: AWR database ID
         begin_snapshot_id: Starting snapshot ID
         end_snapshot_id: Ending snapshot ID
-        report_format: HTML or TEXT
+        report_format: HTML or TEXT (default HTML)
 
     Returns:
         AWR report content
+
+    Examples:
+        - get_awr_report(..., begin_snapshot_id=100, end_snapshot_id=110) - HTML report
+        - get_awr_report(..., report_format="TEXT") - Text format report
+        - First use list_awr_snapshots() to find valid snapshot IDs
     """
     if ctx:
         await ctx.info(f"Generating AWR report ({begin_snapshot_id} to {end_snapshot_id})...")
@@ -255,7 +385,14 @@ async def get_awr_report(
         raise ToolError(f"Failed to generate AWR report: {e}")
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=False,  # Creates a task
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def get_addm_report(
     managed_database_id: str,
     begin_snapshot_id: int,
@@ -275,6 +412,11 @@ async def get_addm_report(
 
     Returns:
         ADDM findings and recommendations
+
+    Examples:
+        - get_addm_report(managed_database_id="ocid1...", begin_snapshot_id=100, end_snapshot_id=110)
+        - Use after identifying performance issues in AWR reports
+        - First use list_awr_snapshots() to find valid snapshot IDs
     """
     if ctx:
         await ctx.info("Generating ADDM report...")
@@ -306,11 +448,20 @@ async def get_addm_report(
         raise ToolError(f"Failed to generate ADDM report: {e}")
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def list_users(
     managed_database_id: str,
     name_filter: Optional[str] = None,
     limit: int = 100,
+    offset: int = 0,
+    format: Literal["json", "markdown"] = "json",
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -319,10 +470,17 @@ async def list_users(
     Args:
         managed_database_id: Managed database OCID
         name_filter: Filter by username (partial match)
-        limit: Maximum results
+        limit: Maximum results per page (default 100)
+        offset: Number of results to skip for pagination
+        format: Output format - "json" (default) or "markdown"
 
     Returns:
         List of users with status and profile info
+
+    Examples:
+        - list_users(managed_database_id="ocid1...") - All users
+        - list_users(managed_database_id="ocid1...", name_filter="APP") - Filter by name
+        - list_users(..., format="markdown") - Human-readable table
     """
     if ctx:
         await ctx.info("Listing database users...")
@@ -330,16 +488,16 @@ async def list_users(
     try:
         dbm_client = get_dbm_client()
 
-        kwargs = {"managed_database_id": managed_database_id, "limit": limit}
+        kwargs = {"managed_database_id": managed_database_id, "limit": 1000}
         if name_filter:
             kwargs["name"] = name_filter
 
         response = dbm_client.list_users(**kwargs)
 
-        users = []
+        all_users = []
         if hasattr(response.data, 'items'):
             for user in response.data.items:
-                users.append({
+                all_users.append({
                     "name": user.name,
                     "status": getattr(user, 'status', None),
                     "profile": getattr(user, 'profile', None),
@@ -349,19 +507,56 @@ async def list_users(
                     "temp_tablespace": getattr(user, 'temp_tablespace', None),
                 })
 
-        return {
-            "users": users,
-            "count": len(users),
+        total_count = len(all_users)
+        paginated = all_users[offset:offset + limit]
+
+        data = {
+            "users": paginated,
+            "count": len(paginated),
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
         }
+
+        if format == "markdown":
+            md = f"""## Database Users
+
+**Total:** {total_count}
+**Showing:** {offset + 1} - {offset + len(paginated)}
+
+| Name | Status | Profile | Default Tablespace |
+|------|--------|---------|-------------------|
+"""
+            for user in paginated:
+                md += f"| {user['name']} | {user['status'] or 'N/A'} | {user['profile'] or 'N/A'} | {user['default_tablespace'] or 'N/A'} |\n"
+
+            if data["pagination"]["has_more"]:
+                md += f"\n*Use offset={data['pagination']['next_offset']} to see more*"
+
+            return {"markdown": md, "data": data}
+
+        return data
 
     except Exception as e:
         raise ToolError(f"Failed to list users: {e}")
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def list_roles(
     managed_database_id: str,
     limit: int = 100,
+    offset: int = 0,
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -369,10 +564,16 @@ async def list_roles(
 
     Args:
         managed_database_id: Managed database OCID
-        limit: Maximum results
+        limit: Maximum results per page (default 100)
+        offset: Number of results to skip for pagination
 
     Returns:
         List of roles with authentication type
+
+    Examples:
+        - list_roles(managed_database_id="ocid1...") - All roles
+        - list_roles(managed_database_id="ocid1...", limit=20) - First 20 roles
+        - Use for security auditing and privilege analysis
     """
     if ctx:
         await ctx.info("Listing database roles...")
@@ -382,32 +583,50 @@ async def list_roles(
 
         response = dbm_client.list_roles(
             managed_database_id=managed_database_id,
-            limit=limit,
+            limit=1000,
         )
 
-        roles = []
+        all_roles = []
         if hasattr(response.data, 'items'):
             for role in response.data.items:
-                roles.append({
+                all_roles.append({
                     "name": role.name,
                     "authentication_type": getattr(role, 'authentication_type', None),
                 })
 
+        total_count = len(all_roles)
+        paginated = all_roles[offset:offset + limit]
+
         return {
-            "roles": roles,
-            "count": len(roles),
+            "roles": paginated,
+            "count": len(paginated),
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
         }
 
     except Exception as e:
         raise ToolError(f"Failed to list roles: {e}")
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def list_sql_plan_baselines(
     managed_database_id: str,
     sql_handle: Optional[str] = None,
     is_enabled: Optional[bool] = None,
     limit: int = 50,
+    offset: int = 0,
     ctx: Context = None,
 ) -> Dict[str, Any]:
     """
@@ -417,10 +636,16 @@ async def list_sql_plan_baselines(
         managed_database_id: Managed database OCID
         sql_handle: Filter by SQL handle
         is_enabled: Filter by enabled status
-        limit: Maximum results
+        limit: Maximum results per page (default 50)
+        offset: Number of results to skip for pagination
 
     Returns:
-        List of SQL plan baselines
+        List of SQL plan baselines with pagination
+
+    Examples:
+        - list_sql_plan_baselines(managed_database_id="ocid1...") - All baselines
+        - list_sql_plan_baselines(..., is_enabled=True) - Only enabled plans
+        - list_sql_plan_baselines(..., sql_handle="SQL_123") - Specific SQL
     """
     if ctx:
         await ctx.info("Listing SQL plan baselines...")
@@ -428,7 +653,7 @@ async def list_sql_plan_baselines(
     try:
         dbm_client = get_dbm_client()
 
-        kwargs = {"managed_database_id": managed_database_id, "limit": limit}
+        kwargs = {"managed_database_id": managed_database_id, "limit": 1000}
         if sql_handle:
             kwargs["sql_handle"] = sql_handle
         if is_enabled is not None:
@@ -436,10 +661,10 @@ async def list_sql_plan_baselines(
 
         response = dbm_client.list_sql_plan_baselines(**kwargs)
 
-        baselines = []
+        all_baselines = []
         if hasattr(response.data, 'items'):
             for baseline in response.data.items:
-                baselines.append({
+                all_baselines.append({
                     "plan_name": baseline.plan_name,
                     "sql_handle": getattr(baseline, 'sql_handle', None),
                     "sql_text": getattr(baseline, 'sql_text', None)[:100] + "..." if getattr(baseline, 'sql_text', None) else None,
@@ -450,16 +675,33 @@ async def list_sql_plan_baselines(
                     "time_created": str(getattr(baseline, 'time_created', None)),
                 })
 
+        total_count = len(all_baselines)
+        paginated = all_baselines[offset:offset + limit]
+
         return {
-            "baselines": baselines,
-            "count": len(baselines),
+            "baselines": paginated,
+            "count": len(paginated),
+            "pagination": {
+                "limit": limit,
+                "offset": offset,
+                "total_count": total_count,
+                "has_more": offset + limit < total_count,
+                "next_offset": offset + limit if offset + limit < total_count else None,
+            },
         }
 
     except Exception as e:
         raise ToolError(f"Failed to list SQL plan baselines: {e}")
 
 
-@dbm_server.tool
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
 async def get_database_fleet_health_metrics(
     compartment_id: str,
     compare_baseline_time: Optional[str] = None,
@@ -470,10 +712,15 @@ async def get_database_fleet_health_metrics(
 
     Args:
         compartment_id: Compartment OCID
-        compare_baseline_time: Baseline time for comparison
+        compare_baseline_time: Baseline time for comparison (ISO format)
 
     Returns:
         Fleet health metrics summary
+
+    Examples:
+        - get_database_fleet_health_metrics(compartment_id="ocid1...") - Current metrics
+        - get_database_fleet_health_metrics(..., compare_baseline_time="2025-01-01T00:00:00Z")
+        - Use to get overall health status of all managed databases
     """
     if ctx:
         await ctx.info("Getting fleet health metrics...")

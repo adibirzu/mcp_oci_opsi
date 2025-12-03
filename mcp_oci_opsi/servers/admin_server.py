@@ -2,6 +2,10 @@
 
 This server provides tools for managing OCI profiles, authentication,
 diagnostics, and server configuration.
+
+Follows MCP Best Practices:
+- Tool annotations for hints (readOnlyHint, destructiveHint, etc.)
+- Examples in all docstrings
 """
 
 from typing import Any, Dict, List, Optional
@@ -9,6 +13,7 @@ import os
 
 from fastmcp import FastMCP, Context
 from fastmcp.exceptions import ToolError
+from fastmcp.tools.tool import ToolAnnotations
 
 from ..config import (
     get_oci_config,
@@ -35,17 +40,31 @@ admin_server = FastMCP(
     instructions="""
     Admin tools provide profile management, authentication diagnostics,
     and server configuration capabilities.
+
+    Performance: Most operations are local and instant.
+    Rate Limits: Unlimited (no API calls except validate_oci_profile).
     """,
 )
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
 async def ping(ctx: Context = None) -> Dict[str, Any]:
     """
     Simple health check to verify server connectivity.
 
     Returns:
         Health status and server information
+
+    Examples:
+        - ping() - Check if server is running
+        - Use as first call to verify MCP connection
     """
     if ctx:
         await ctx.debug("Health check ping")
@@ -58,13 +77,25 @@ async def ping(ctx: Context = None) -> Dict[str, Any]:
     }
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
 async def whoami(ctx: Context = None) -> Dict[str, Any]:
     """
     Get information about the authenticated user and current context.
 
     Returns:
         User identity, tenancy, region, and authentication mode
+
+    Examples:
+        - whoami() - Get current user details
+        - Use to verify authentication is working correctly
+        - Check which profile/tenancy is active
     """
     if ctx:
         await ctx.info("Getting authenticated user information")
@@ -86,13 +117,24 @@ async def whoami(ctx: Context = None) -> Dict[str, Any]:
         raise ToolError(f"Failed to get user information: {e}")
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
 async def list_oci_profiles(ctx: Context = None) -> Dict[str, Any]:
     """
     List all available OCI profiles from ~/.oci/config.
 
     Returns:
         List of profile names and current active profile
+
+    Examples:
+        - list_oci_profiles() - Show all available profiles
+        - Use to see which profiles can be used with validate_oci_profile()
     """
     if ctx:
         await ctx.info("Listing OCI profiles")
@@ -113,7 +155,14 @@ async def list_oci_profiles(ctx: Context = None) -> Dict[str, Any]:
         raise ToolError(f"Failed to list profiles: {e}")
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
 async def get_profile_details(
     profile: Optional[str] = None,
     ctx: Context = None,
@@ -126,6 +175,11 @@ async def get_profile_details(
 
     Returns:
         Profile configuration details (without sensitive data)
+
+    Examples:
+        - get_profile_details() - Get current profile details
+        - get_profile_details(profile="DEFAULT") - Get specific profile
+        - Sensitive fields like fingerprint are partially masked
     """
     if ctx:
         await ctx.info(f"Getting profile details for: {profile or 'current'}")
@@ -160,7 +214,14 @@ async def get_profile_details(
         raise ToolError(f"Failed to get profile details: {e}")
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,  # Makes OCI API call
+    )
+)
 async def validate_oci_profile(
     profile: Optional[str] = None,
     ctx: Context = None,
@@ -173,6 +234,11 @@ async def validate_oci_profile(
 
     Returns:
         Validation result with tenancy information if successful
+
+    Examples:
+        - validate_oci_profile() - Validate current profile
+        - validate_oci_profile(profile="PRODUCTION") - Validate specific profile
+        - Returns tenancy info if valid, error message if invalid
     """
     if ctx:
         await ctx.info(f"Validating profile: {profile or 'current'}")
@@ -216,7 +282,14 @@ async def validate_oci_profile(
         }
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
 async def get_auth_status(ctx: Context = None) -> Dict[str, Any]:
     """
     Get authentication configuration status.
@@ -225,6 +298,11 @@ async def get_auth_status(ctx: Context = None) -> Dict[str, Any]:
 
     Returns:
         Authentication status and configuration details
+
+    Examples:
+        - get_auth_status() - Check which auth methods are configured
+        - Use to diagnose authentication issues
+        - Shows OAuth, API Key, and Resource Principal status
     """
     if ctx:
         await ctx.info("Getting authentication status")
@@ -259,13 +337,24 @@ async def get_auth_status(ctx: Context = None) -> Dict[str, Any]:
     }
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
 async def get_compartment_info(ctx: Context = None) -> Dict[str, Any]:
     """
     Get current compartment information.
 
     Returns:
         Compartment ID and source (environment or tenancy)
+
+    Examples:
+        - get_compartment_info() - Get current compartment OCID
+        - Use to verify which compartment will be used for operations
     """
     if ctx:
         await ctx.info("Getting compartment information")
@@ -280,7 +369,14 @@ async def get_compartment_info(ctx: Context = None) -> Dict[str, Any]:
     }
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=False,  # Generates new keys
+        destructive_hint=False,
+        idempotent_hint=False,  # Each call generates different keys
+        open_world_hint=False,
+    )
+)
 async def generate_oauth_keys(ctx: Context = None) -> Dict[str, Any]:
     """
     Generate new keys for OAuth configuration.
@@ -290,6 +386,11 @@ async def generate_oauth_keys(ctx: Context = None) -> Dict[str, Any]:
 
     Returns:
         Generated keys (store these securely!)
+
+    Examples:
+        - generate_oauth_keys() - Generate new encryption keys
+        - Output includes instructions for secure storage
+        - Each call generates unique keys - save them immediately
     """
     if ctx:
         await ctx.warning("Generating new OAuth keys - store these securely!")
@@ -306,13 +407,24 @@ async def generate_oauth_keys(ctx: Context = None) -> Dict[str, Any]:
     }
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
 async def get_server_config(ctx: Context = None) -> Dict[str, Any]:
     """
     Get current server configuration.
 
     Returns:
         Server configuration including transport and auth settings
+
+    Examples:
+        - get_server_config() - View all server settings
+        - Shows transport, auth mode, paths, and debug status
     """
     if ctx:
         await ctx.info("Getting server configuration")
@@ -329,7 +441,14 @@ async def get_server_config(ctx: Context = None) -> Dict[str, Any]:
     }
 
 
-@admin_server.tool
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,  # Makes OCI API calls
+    )
+)
 async def diagnose_opsi_permissions(
     compartment_id: str,
     ctx: Context = None,
@@ -344,6 +463,11 @@ async def diagnose_opsi_permissions(
 
     Returns:
         Permission test results and remediation suggestions
+
+    Examples:
+        - diagnose_opsi_permissions(compartment_id="ocid1...") - Test permissions
+        - Provides IAM policy recommendations for failures
+        - Tests OPSI, DBM, and host insights access
     """
     if ctx:
         await ctx.info("Diagnosing OPSI permissions...")
