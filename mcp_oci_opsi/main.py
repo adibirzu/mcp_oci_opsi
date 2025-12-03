@@ -25,6 +25,8 @@ from . import tools_opsi_sql_insights
 # Diagnostic and bulk operation tools
 from . import tools_opsi_diagnostics
 from . import tools_sqlwatch_bulk
+# Skills support for enhanced DBA guidance
+from . import tools_skills
 
 # Initialize FastMCP application
 app = FastMCP("oci-opsi")
@@ -2382,6 +2384,131 @@ def check_sqlwatch_work_requests(
         profile=profile,
         hours_back=hours_back,
     )
+
+
+# ============================================================================
+# Skills Tools - Enhanced DBA Guidance with Token Optimization
+# ============================================================================
+
+
+@app.tool()
+def list_available_skills() -> dict:
+    """
+    List all available DBA skills for enhanced guidance.
+
+    Skills are specialized instruction sets that help perform specific DBA
+    tasks with minimal token usage and maximum accuracy. Each skill provides:
+    - Focused guidance for specific task types
+    - Recommended tools and workflows
+    - Best practices and examples
+
+    Returns:
+        Dictionary containing list of available skills with descriptions.
+
+    Example:
+        list_available_skills()
+        # Returns: {"skills": [{"name": "fleet-overview", ...}, ...]}
+    """
+    return tools_skills.list_available_skills()
+
+
+@app.tool()
+def get_skill_context(skill_name: str) -> dict:
+    """
+    Get detailed context for a specific DBA skill.
+
+    Returns full skill instructions including recommended tools,
+    example interactions, and best practices.
+
+    Available skills:
+    - fleet-overview: Instant database fleet statistics
+    - sql-performance: SQL analysis and tuning
+    - capacity-planning: Resource forecasting
+    - database-diagnostics: ADDM, AWR, troubleshooting
+    - awr-analysis: Deep AWR performance analysis
+    - host-monitoring: Host resource monitoring
+    - storage-management: Tablespace and storage
+    - security-audit: Users, roles, privileges
+    - sql-watch-management: SQL Watch enablement
+    - sql-plan-baselines: SPM management
+    - multi-tenancy: Multi-profile operations
+    - exadata-monitoring: Exadata systems
+
+    Args:
+        skill_name: Name of the skill to retrieve
+
+    Returns:
+        Dictionary with skill name, description, allowed tools, and content.
+
+    Example:
+        get_skill_context("sql-performance")
+    """
+    return tools_skills.get_skill_context(skill_name)
+
+
+@app.tool()
+def get_skill_for_query(query: str) -> dict:
+    """
+    Find the most relevant skill for a user query.
+
+    Analyzes the query to determine which skill would be most helpful,
+    then returns that skill's context for optimal response generation.
+
+    This is useful for automatically selecting the right guidance based
+    on what the user is asking about.
+
+    Args:
+        query: User's natural language question or request
+
+    Returns:
+        Dictionary with matched skill name, context, and recommended tools.
+
+    Example:
+        get_skill_for_query("How many databases do I have?")
+        # Returns: {"matched_skill": "fleet-overview", "context": "...", ...}
+    """
+    return tools_skills.get_skill_for_query(query)
+
+
+@app.tool()
+def get_quick_reference(category: Optional[str] = None) -> dict:
+    """
+    Get a quick reference guide for common DBA tasks.
+
+    Provides a condensed reference of which tools to use for different
+    tasks, optimized for minimal token usage.
+
+    Args:
+        category: Optional filter (fleet, sql, capacity, diagnostics, storage, security)
+
+    Returns:
+        Dictionary containing task-to-tool mappings.
+
+    Example:
+        get_quick_reference("sql")  # SQL-related tools only
+        get_quick_reference()       # All categories
+    """
+    return tools_skills.get_quick_reference(category)
+
+
+@app.tool()
+def get_token_optimization_tips() -> dict:
+    """
+    Get tips for minimizing token usage in DBA operations.
+
+    Returns best practices for efficient queries that minimize
+    token consumption while maximizing information quality.
+
+    Useful for understanding which tools are most token-efficient
+    and how to structure queries for optimal results.
+
+    Returns:
+        Dictionary containing optimization tips and tool recommendations.
+
+    Example:
+        get_token_optimization_tips()
+    """
+    return tools_skills.get_token_optimization_tips()
 
 
 # ============================================================================

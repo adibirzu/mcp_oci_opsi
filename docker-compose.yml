@@ -1,0 +1,54 @@
+# MCP OCI OPSI Server - Docker Compose Configuration
+# For local development and testing with HTTP transport
+
+version: '3.8'
+
+services:
+  mcp-oci-opsi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mcp-oci-opsi
+    ports:
+      - "8000:8000"
+    environment:
+      # Server configuration
+      - MCP_TRANSPORT=http
+      - MCP_HTTP_HOST=0.0.0.0
+      - MCP_HTTP_PORT=8000
+      - MCP_VERSION=v3
+      - MCP_DEBUG=0
+
+      # OCI Configuration (mount config file or set these)
+      - OCI_CLI_PROFILE=${OCI_CLI_PROFILE:-DEFAULT}
+      - OCI_REGION=${OCI_REGION:-us-phoenix-1}
+      - OCI_COMPARTMENT_ID=${OCI_COMPARTMENT_ID:-}
+
+      # OAuth (optional - set FASTMCP_OAUTH_ENABLED=1 to enable)
+      - FASTMCP_OAUTH_ENABLED=${FASTMCP_OAUTH_ENABLED:-0}
+      - FASTMCP_SERVER_AUTH_OCI_IAM_GUID=${FASTMCP_SERVER_AUTH_OCI_IAM_GUID:-}
+      - FASTMCP_SERVER_AUTH_OCI_CONFIG_URL=${FASTMCP_SERVER_AUTH_OCI_CONFIG_URL:-}
+      - FASTMCP_SERVER_AUTH_OCI_CLIENT_ID=${FASTMCP_SERVER_AUTH_OCI_CLIENT_ID:-}
+      - FASTMCP_SERVER_AUTH_OCI_CLIENT_SECRET=${FASTMCP_SERVER_AUTH_OCI_CLIENT_SECRET:-}
+      - FASTMCP_SERVER_BASE_URL=${FASTMCP_SERVER_BASE_URL:-http://localhost:8000}
+      - JWT_SIGNING_KEY=${JWT_SIGNING_KEY:-}
+      - STORAGE_ENCRYPTION_KEY=${STORAGE_ENCRYPTION_KEY:-}
+
+    volumes:
+      # Mount OCI config (read-only)
+      - ~/.oci:/home/mcp/.oci:ro
+      # Persistent storage for cache and OAuth tokens
+      - mcp-data:/data
+
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    restart: unless-stopped
+
+volumes:
+  mcp-data:
+    driver: local

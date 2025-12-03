@@ -1,0 +1,137 @@
+# =============================================================================
+# MCP OCI OPSI Server - Terraform Variables Example
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in your values:
+#   cp terraform.tfvars.example terraform.tfvars
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# OCI Provider Configuration (Required)
+# -----------------------------------------------------------------------------
+
+# Your OCI tenancy OCID
+tenancy_ocid = "ocid1.tenancy.oc1..your-tenancy-ocid"
+
+# Your OCI user OCID (for API key authentication)
+# Leave empty to use instance principal or cloud shell authentication
+user_ocid = "ocid1.user.oc1..your-user-ocid"
+
+# Fingerprint of your OCI API key
+fingerprint = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+
+# Path to your OCI API private key
+private_key_path = "~/.oci/oci_api_key.pem"
+
+# OCI region where resources will be created
+region = "us-phoenix-1"
+
+# -----------------------------------------------------------------------------
+# Compartment Configuration (Required)
+# -----------------------------------------------------------------------------
+
+# Compartment where the VM and network resources will be created
+compartment_ocid = "ocid1.compartment.oc1..your-compartment-ocid"
+
+# -----------------------------------------------------------------------------
+# Network Configuration
+# -----------------------------------------------------------------------------
+
+# Whether to create a new VCN or use existing
+# Set to false if you have an existing VCN
+create_vcn = true
+
+# If create_vcn = false, provide existing VCN and subnet OCIDs
+# vcn_ocid    = "ocid1.vcn.oc1..your-vcn-ocid"
+# subnet_ocid = "ocid1.subnet.oc1..your-subnet-ocid"
+
+# CIDR blocks for new VCN (only used if create_vcn = true)
+vcn_cidr_block    = "10.0.0.0/16"
+subnet_cidr_block = "10.0.1.0/24"
+
+# Use public subnet (with public IP and internet access)
+# Set to false for private subnet (requires bastion for access)
+use_public_subnet = true
+
+# -----------------------------------------------------------------------------
+# Compute Instance Configuration
+# -----------------------------------------------------------------------------
+
+# Display name for the VM
+instance_display_name = "mcp-oci-opsi-server"
+
+# VM shape - Flex shapes allow custom OCPU/memory
+instance_shape = "VM.Standard.E4.Flex"
+
+# Resources for flex shape
+instance_ocpus         = 2   # 2 OCPUs recommended minimum
+instance_memory_in_gbs = 16  # 16 GB RAM recommended
+
+# Leave empty to use latest Oracle Linux 8 image
+# instance_image_ocid = "ocid1.image.oc1..your-image-ocid"
+
+# SSH key for instance access
+ssh_public_key_path = "~/.ssh/id_rsa.pub"
+# Or provide key content directly:
+# ssh_public_key = "ssh-rsa AAAAB3..."
+
+# -----------------------------------------------------------------------------
+# MCP Server Configuration
+# -----------------------------------------------------------------------------
+
+# Server version (v2 or v3 - v3 recommended)
+mcp_version = "v3"
+
+# Transport mode (stdio or http)
+# Use http for remote access
+mcp_transport = "http"
+
+# HTTP port for MCP server
+mcp_http_port = 8000
+
+# -----------------------------------------------------------------------------
+# OAuth Configuration (Optional - for production)
+# -----------------------------------------------------------------------------
+
+# Enable OAuth authentication
+# Set to true for production multi-user deployments
+enable_oauth = false
+
+# OAuth settings (required if enable_oauth = true)
+# oauth_config_url    = "https://idcs-xxx.identity.oraclecloud.com/.well-known/openid-configuration"
+# oauth_client_id     = "your-oauth-client-id"
+# oauth_client_secret = "your-oauth-client-secret"
+# server_base_url     = "https://your-public-domain.com"
+
+# -----------------------------------------------------------------------------
+# OCI CLI Configuration for the MCP Server
+# -----------------------------------------------------------------------------
+
+# OCI CLI profile to use on the server
+oci_cli_profile = "DEFAULT"
+
+# OCI config and key content (base64 encoded)
+# Use these to pre-configure OCI CLI on the server
+# Generate with: base64 -i ~/.oci/config
+# oci_config_content = "W0RFRkFVTFRdCnVzZXI9..."
+# oci_key_content    = "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQ..."
+
+# -----------------------------------------------------------------------------
+# GitHub Repository
+# -----------------------------------------------------------------------------
+
+# Repository URL for deployment
+github_repo_url = "https://github.com/adibirzu/mcp_oci_opsi.git"
+
+# Branch to deploy
+github_branch = "main"
+
+# -----------------------------------------------------------------------------
+# Tags
+# -----------------------------------------------------------------------------
+
+freeform_tags = {
+  "Project"     = "mcp-oci-opsi"
+  "Environment" = "production"
+  "ManagedBy"   = "terraform"
+  "Owner"       = "your-name"
+}

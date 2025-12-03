@@ -1,8 +1,12 @@
 # Operations Insights Demo Script Guide
 
+> **🎉 NEW**: See [DEMO_GUIDE_V2.md](./DEMO_GUIDE_V2.md) for v2.0 features including agent detection, multi-tenancy, user management, and AWR metrics!
+
 ## Overview
 
 The `demo_opsi_features.py` script demonstrates **15 key Operations Insights capabilities** with real data from your OCI environment.
+
+**For v2.0 Features** (agent detection, multi-tenancy, resource stats): Run `demo_v2_features.py` instead!
 
 ## What It Demonstrates
 
@@ -208,4 +212,9 @@ This demo showcases:
 - ✅ Real data from your OCI environment
 - ✅ Ready-to-use patterns for LLM integration
 
-**Total API Coverage**: 75+ Operations Insights tools now available!
+**Total API Coverage**: 117 tools available in v2.0!
+
+**📚 See Also**:
+- [DEMO_GUIDE_V2.md](./DEMO_GUIDE_V2.md) - v2.0 features demo
+- [V2.0_RELEASE_SUMMARY.md](./V2.0_RELEASE_SUMMARY.md) - Complete release notes
+- [wiki/Quick-Start.md](./wiki/Quick-Start.md) - Quick start guide

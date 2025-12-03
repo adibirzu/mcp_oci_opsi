@@ -1,15 +1,16 @@
 [project]
 name = "mcp-oci-opsi"
-version = "0.1.0"
-description = "MCP server for Oracle Cloud Infrastructure Operations Insights"
+version = "3.0.0"
+description = "MCP server for Oracle Cloud Infrastructure Operations Insights - Enhanced with FastMCP 2.0"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "fastmcp>=0.1.0",
+    "fastmcp>=2.0.0",
     "mcp>=0.1.0",
     "oci>=2.100.0",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
+    "pyyaml>=6.0.0",
 ]
 
 [project.optional-dependencies]
@@ -20,6 +21,11 @@ dev = [
 ]
 database = [
     "oracledb>=2.0.0",
+]
+auth = [
+    "cryptography>=41.0.0",
+    "key-value-aio>=0.1.0",
+    "PyJWT>=2.8.0",
 ]
 
 [build-system]
