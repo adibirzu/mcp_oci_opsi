@@ -3,6 +3,7 @@
 from typing import Any, Callable, List, Optional
 
 import oci
+import os
 
 from .config import get_oci_config, get_signer_and_region
 
@@ -162,6 +163,12 @@ def get_opsi_client(use_resource_principal: bool = False, region: str = None) ->
     else:
         # User principal - use config directly
         config = get_oci_config()
+
+        # Allow environment override for demo/targeted scans (e.g., emdemo -> uk-london-1)
+        # Only apply if explicit region param wasn't passed
+        env_override = os.getenv("MCP_OPSI_REGION_OVERRIDE")
+        if env_override and not region:
+            region = env_override
 
         # Override region if specified
         if region:

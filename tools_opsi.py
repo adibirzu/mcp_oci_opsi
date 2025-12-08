@@ -1,16 +1,16 @@
 """FastMCP tools for OCI Operations Insights."""
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 from .oci_clients import get_opsi_client, extract_region_from_ocid, get_ocid_resource_type
 
 
 def list_database_insights(
     compartment_id: str,
-    lifecycle_state: str | None = None,
-    page: str | None = None,
-    limit: int | None = None,
+    lifecycle_state: Optional[str] = None,
+    page: Optional[str] = None,
+    limit: Optional[int] = None,
 ) -> dict[str, Any]:
     """
     List database insights in a compartment with optional filtering.
@@ -89,7 +89,7 @@ def list_database_insights(
 def query_warehouse_standard(
     compartment_id: str,
     statement: str,
-    region: str | None = None,
+    region: Optional[str] = None,
 ) -> dict[str, Any]:
     """
     Execute a standard SQL query against the Operations Insights warehouse.
@@ -259,8 +259,8 @@ def list_sql_texts(
     compartment_id: str,
     time_start: str,
     time_end: str,
-    database_id: str | None = None,
-    sql_identifier: str | None = None,
+    database_id: Optional[str] = None,
+    sql_identifier: Optional[str] = None,
 ) -> dict[str, Any]:
     """
     List SQL texts from Operations Insights for analysis.

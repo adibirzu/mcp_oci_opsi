@@ -20,7 +20,8 @@ Compatible with all LLM clients:
 import os
 
 # Allow version selection via environment variable
-version = os.getenv("MCP_VERSION", "v3").lower()
+# Default to v2 (FastMCP server) so the MCP server starts correctly when launched by clients.
+version = os.getenv("MCP_VERSION", "v2").lower()
 
 if version == "v2":
     from .main import main

@@ -27,6 +27,12 @@ from . import tools_opsi_diagnostics
 from . import tools_sqlwatch_bulk
 # Skills support for enhanced DBA guidance
 from . import tools_skills
+# OAuth (OCI IAM / IDCS) integration for FastMCP
+from .auth_bridge.oca_auth import (
+    fetch_oca_token as oci_oauth_fetch_token,
+    get_token_info as oci_oauth_get_info,
+    clear_tokens as oci_oauth_clear_tokens,
+)
 
 # Initialize FastMCP application
 app = FastMCP("oci-opsi")
@@ -197,6 +203,71 @@ def get_profile_info(profile_name: Optional[str] = None) -> dict:
             "type": type(e).__name__,
             "profile_name": profile_name,
         }
+
+
+# ============================================================================
+# OCI IAM OAuth Tools (IDCS)
+# ============================================================================
+
+
+@app.tool()
+def oci_oauth_login(flow: Optional[str] = None) -> dict:
+    """
+    Start OCI IAM OAuth login (IDCS) and cache access/refresh tokens.
+
+    Args:
+        flow: "pc" (browser PKCE) or "headless" (device code). Defaults to env OCA_AUTH_FLOW or "pc".
+
+    Returns:
+        Token info (expires, scopes). Token value itself is not returned.
+    """
+    try:
+        # Trigger OAuth (stores tokens in local manager)
+        _ = oci_oauth_fetch_token(flow)
+        info = oci_oauth_get_info()
+        # Do not expose raw tokens
+        if "access_token" in info:
+            info.pop("access_token")
+        if "refresh_token" in info:
+            info.pop("refresh_token")
+        return {
+            "status": "ok",
+            "message": "Authenticated with OCI IAM (IDCS). Tokens cached.",
+            "token_info": info,
+        }
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
+
+
+@app.tool()
+def oci_oauth_status() -> dict:
+    """
+    Return current OAuth token status without exposing raw tokens.
+
+    Returns:
+        Token metadata (expiry, scopes, issued_at).
+    """
+    try:
+        info = oci_oauth_get_info()
+        if "access_token" in info:
+            info.pop("access_token")
+        if "refresh_token" in info:
+            info.pop("refresh_token")
+        return {"status": "ok", "token_info": info}
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
+
+
+@app.tool()
+def oci_oauth_logout() -> dict:
+    """
+    Clear cached OAuth tokens (logout).
+    """
+    try:
+        oci_oauth_clear_tokens()
+        return {"status": "ok", "message": "Tokens cleared"}
+    except Exception as e:
+        return {"error": str(e), "type": type(e).__name__}
 
 
 # ============================================================================
@@ -2518,25 +2589,33 @@ def get_token_optimization_tips() -> dict:
 
 def main():
     """Run the MCP server with transport selection based on environment variables."""
-    # Check transport mode from environment variables
+    # Transport selection with fallbacks:
+    # - stdio (default)
+    # - http (streamable HTTP)
+    # - sse (Server-Sent Events)
     transport = os.getenv("FASTMCP_TRANSPORT", "stdio").lower()
     use_http = os.getenv("FASTMCP_HTTP", "0") == "1"
 
+    if transport == "sse":
+        print("Starting MCP server in SSE mode...")
+        try:
+            app.run(transport="sse")
+            return
+        except (ValueError, NotImplementedError):
+            print("SSE transport not available, falling back to HTTP")
+
+        # fall through to HTTP
+
     if use_http or transport == "http":
-        # Run HTTP server with streaming support
-        # Note: This requires the FastMCP HTTP implementation
-        # Check FastMCP docs for exact implementation
         print("Starting MCP server in HTTP mode...")
         try:
-            # Try to run with HTTP transport
             app.run(transport="http")
+            return
         except (ValueError, NotImplementedError):
-            # Fallback if HTTP not supported in this FastMCP version
             print("HTTP transport not available, falling back to stdio")
-            app.run(transport="stdio")
-    else:
-        # Default: stdio transport for Claude Desktop/Code
-        app.run(transport="stdio")
+
+    # Default: stdio transport for Claude Desktop/Code
+    app.run(transport="stdio")
 
 
 if __name__ == "__main__":
