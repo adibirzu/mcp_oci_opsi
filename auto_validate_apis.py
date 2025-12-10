@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """
 Auto-Discovering API Validation Suite
@@ -11,7 +12,7 @@ from typing import Dict, List, Any, Callable
 import importlib
 
 # Test configuration
-COMPARTMENT_ID = "ocid1.compartment.oc1..aaaaaaaaje7atqmhsmy3ca4exqvq6zkhjeuzs3ioe2q2exarjmlqey3iljtq"
+COMPARTMENT_ID = os.getenv("OCI_COMPARTMENT_ID", "ocid1.compartment.oc1..example")
 TIME_END = datetime.now(UTC).isoformat().replace('+00:00', 'Z')
 TIME_START = (datetime.now(UTC) - timedelta(days=7)).isoformat().replace('+00:00', 'Z')
 

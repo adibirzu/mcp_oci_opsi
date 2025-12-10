@@ -355,7 +355,10 @@ class DatabaseCache:
         return self.is_cache_valid(max_age_hours)
 
     def build_cache_with_profile(
-        self, compartment_ids: List[str], profile: Optional[str] = None
+        self,
+        compartment_ids: List[str],
+        profile: Optional[str] = None,
+        region: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Build cache with specific OCI CLI profile for multi-tenancy support.
@@ -381,20 +384,24 @@ class DatabaseCache:
             >>> cache = DatabaseCache()
             >>> # Build cache for tenancy1
             >>> result = cache.build_cache_with_profile(
-            ...     compartment_ids=["ocid1.compartment.oc1..aaa"],
+            ...     compartment_ids=["ocid1.compartment.oc1..example"],
             ...     profile="tenancy1"
             ... )
             >>> print(f"Built cache for {result['tenancy_name']}")
         """
-        # Set profile if specified
+        # Set profile/region if specified
         old_profile = None
+        old_region = None
         if profile:
             old_profile = os.environ.get("OCI_CLI_PROFILE")
             os.environ["OCI_CLI_PROFILE"] = profile
+        if region:
+            old_region = os.environ.get("OCI_REGION")
+            os.environ["OCI_REGION"] = region
 
         try:
             config = get_oci_config()
-            opsi_client = get_opsi_client()
+            opsi_client = get_opsi_client(region=region)
             identity_client = oci.identity.IdentityClient(config)
 
             # Get tenancy information
@@ -403,7 +410,7 @@ class DatabaseCache:
             # Update metadata
             self.cache_data["metadata"]["last_updated"] = datetime.utcnow().isoformat() + "Z"
             self.cache_data["metadata"]["profile"] = profile or os.getenv("OCI_CLI_PROFILE", "DEFAULT")
-            self.cache_data["metadata"]["region"] = config.get("region")
+            self.cache_data["metadata"]["region"] = region or config.get("region")
             self.cache_data["metadata"]["tenancy_name"] = tenancy.name
             self.cache_data["metadata"]["tenancy_id"] = config["tenancy"]
 
@@ -514,21 +521,39 @@ class DatabaseCache:
 
         finally:
             # Restore original profile
-            if profile and old_profile:
-                os.environ["OCI_CLI_PROFILE"] = old_profile
-            elif profile:
-                os.environ.pop("OCI_CLI_PROFILE", None)
+            if profile is not None:
+                if old_profile:
+                    os.environ["OCI_CLI_PROFILE"] = old_profile
+                else:
+                    os.environ.pop("OCI_CLI_PROFILE", None)
+            if region is not None:
+                if old_region:
+                    os.environ["OCI_REGION"] = old_region
+                else:
+                    os.environ.pop("OCI_REGION", None)
 
 
-# Global cache instance
-_cache = DatabaseCache()
+# Global cache instances per profile (default + others)
+_cache_map: Dict[str, DatabaseCache] = {}
 
 
-def get_cache() -> DatabaseCache:
+def _cache_key(profile: Optional[str]) -> str:
+    return (profile or os.getenv("OCI_CLI_PROFILE") or "DEFAULT").strip()
+
+
+def get_cache(profile: Optional[str] = None) -> DatabaseCache:
     """
-    Get the global cache instance.
+    Get (or create) a cache instance for the given profile. Each profile uses its
+    own cache file to keep tenant data isolated.
+
+    Args:
+        profile: Optional OCI profile name. Defaults to env/DEFAULT.
 
     Returns:
-        DatabaseCache instance
+        DatabaseCache instance scoped to the profile.
     """
-    return _cache
+    key = _cache_key(profile)
+    if key not in _cache_map:
+        cache_file = Path.home() / f".mcp_oci_opsi_cache_{key}.json"
+        _cache_map[key] = DatabaseCache(cache_file=cache_file)
+    return _cache_map[key]

@@ -11,12 +11,18 @@ Follows MCP Best Practices:
 
 from typing import Any, Dict, List, Optional, Literal
 from datetime import datetime, timedelta
+import logging
 
 from fastmcp import FastMCP, Context
 from fastmcp.exceptions import ToolError
 from fastmcp.tools.tool import ToolAnnotations
 
-from ..oci_clients import get_dbm_client, list_all
+from ..oci_clients import get_dbm_client
+
+logger = logging.getLogger(__name__)
+
+MAX_PAGE_LIMIT = 100
+RATE_LIMIT_HINT = "OCI DBM ~100 req/min; page with limit<=100 and backoff (2s,4s,8s) on throttling."
 
 
 # Create DBM sub-server
@@ -31,6 +37,81 @@ dbm_server = FastMCP(
     Rate Limits: Subject to OCI API limits (~100/minute).
     """,
 )
+
+def _validate_limit_offset(limit: int, offset: int) -> None:
+    if limit < 1 or limit > MAX_PAGE_LIMIT:
+        raise ToolError(f"limit must be between 1 and {MAX_PAGE_LIMIT}")
+    if offset < 0:
+        raise ToolError("offset must be >= 0")
+
+
+def _validate_ocid(ocid: Optional[str], field: str) -> None:
+    if not ocid or not isinstance(ocid, str) or not ocid.startswith("ocid1."):
+        raise ToolError(f"{field} must be a valid OCID (starting with ocid1.)")
+
+
+def _paginate_with_offset(getter, limit: int, offset: int, **kwargs) -> tuple[list, dict]:
+    _validate_limit_offset(limit, offset)
+
+    results: list = []
+    seen = 0
+    page_token = None
+
+    while len(results) < limit:
+        remaining_needed = (offset + limit) - seen
+        page_limit = max(1, min(MAX_PAGE_LIMIT, remaining_needed))
+        response = getter(limit=page_limit, page=page_token, **kwargs)
+        items = getattr(response, "data", []) or []
+
+        if not items:
+            break
+
+        for item in items:
+            if seen < offset:
+                seen += 1
+                continue
+            if len(results) >= limit:
+                break
+            results.append(item)
+            seen += 1
+
+        page_token = getattr(response, "next_page", None) or getattr(response, "opc_next_page", None)
+        if not page_token:
+            break
+
+    has_more = bool(page_token)
+    pagination = {
+        "limit": limit,
+        "offset": offset,
+        "has_more": has_more,
+        "next_offset": offset + len(results) if has_more else None,
+        "total_count": seen if not has_more else None,
+    }
+    return results, pagination
+
+
+def _raise_tool_error(context: str, error: Exception) -> None:
+    logger.exception("DBM tool failed: %s", context, exc_info=error)
+    raise ToolError(f"Unable to {context} right now. Please retry with a smaller scope or later.")
+
+
+@dbm_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
+async def health(ctx: Context = None) -> Dict[str, Any]:
+    """Lightweight readiness check for DBM server."""
+    if ctx:
+        await ctx.debug("DBM health check")
+    return {
+        "status": "ok",
+        "rate_limit_hint": RATE_LIMIT_HINT,
+        "note": "No OCI calls made; safe for readiness probes.",
+    }
 
 
 @dbm_server.tool(
@@ -71,17 +152,20 @@ async def list_managed_databases(
         await ctx.info("Listing managed databases...")
 
     try:
+        _validate_ocid(compartment_id, "compartment_id")
+        _validate_limit_offset(limit, offset)
         dbm_client = get_dbm_client()
 
-        kwargs = {"compartment_id": compartment_id, "limit": 1000}  # Get all for pagination
+        kwargs = {"compartment_id": compartment_id}
         if management_option:
             kwargs["management_option"] = management_option
 
-        all_results = list_all(dbm_client.list_managed_databases, **kwargs)
-        total_count = len(all_results)
-
-        # Apply pagination
-        paginated_results = all_results[offset:offset + limit]
+        paginated_results, pagination = _paginate_with_offset(
+            dbm_client.list_managed_databases,
+            limit=limit,
+            offset=offset,
+            **kwargs,
+        )
 
         databases = []
         for db in paginated_results:
@@ -99,19 +183,15 @@ async def list_managed_databases(
         data = {
             "databases": databases,
             "count": len(databases),
-            "pagination": {
-                "limit": limit,
-                "offset": offset,
-                "total_count": total_count,
-                "has_more": offset + limit < total_count,
-                "next_offset": offset + limit if offset + limit < total_count else None,
-            },
+            "pagination": pagination,
+            "rate_limit_hint": RATE_LIMIT_HINT,
         }
 
         if format == "markdown":
+            total_display = pagination["total_count"] if pagination["total_count"] is not None else "unknown"
             md = f"""## Managed Databases
 
-**Total:** {total_count}
+**Total:** {total_display}
 **Showing:** {offset + 1} - {offset + len(databases)}
 
 | Name | Type | Management | Workload |
@@ -121,14 +201,16 @@ async def list_managed_databases(
                 md += f"| {db['name']} | {db['database_type'] or 'N/A'} | {db['management_option'] or 'N/A'} | {db['workload_type'] or 'N/A'} |\n"
 
             if data["pagination"]["has_more"]:
-                md += f"\n*Use offset={data['pagination']['next_offset']} to see more*"
+                md += f"\n*Use offset={data['pagination']['next_offset']} to see more (limit {MAX_PAGE_LIMIT})*"
 
             return {"markdown": md, "data": data}
 
         return data
 
+    except ToolError:
+        raise
     except Exception as e:
-        raise ToolError(f"Failed to list managed databases: {e}")
+        _raise_tool_error("list managed databases", e)
 
 
 @dbm_server.tool(

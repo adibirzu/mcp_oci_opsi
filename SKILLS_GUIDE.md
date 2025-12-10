@@ -2,7 +2,142 @@
 
 This guide explains how to use the Skills feature in the MCP OCI OPSI server for enhanced DBA operations with minimal token usage and maximum accuracy.
 
-## What are Skills?
+## Two Types of Skills
+
+The OPSI MCP server provides two complementary skill systems:
+
+1. **Markdown Skills (v1)** - Declarative skill files that provide guidance and context
+2. **Programmatic Skills (v2)** - Composable Python classes that provide intelligent analysis
+
+### Quick Comparison
+
+| Feature | Markdown Skills (v1) | Programmatic Skills (v2) |
+|---------|---------------------|-------------------------|
+| Format | SKILL.md files | Python classes |
+| Purpose | Provide guidance | Perform analysis |
+| Response | Skill context text | Structured data |
+| Speed | Instant (file read) | Tiered (see below) |
+| Use Case | Tool selection guidance | Direct database analysis |
+
+---
+
+## Programmatic Skills (v2) - NEW
+
+The programmatic skills provide intelligent, composable analysis capabilities following the [skillz pattern](https://github.com/intellectronica/skillz).
+
+### Available Programmatic Skills
+
+| Skill | Tier | Response Time | Description |
+|-------|------|---------------|-------------|
+| `DatabaseDiscoverySkill` | 1 | < 100ms | Fast database fleet discovery using cached data |
+| `PerformanceAnalysisSkill` | 2 | 1-30s | CPU, memory, I/O analysis with trends |
+| `CostOptimizationSkill` | 2 | 1-5s | Identify cost-saving opportunities |
+
+### Skill Tiers
+
+- **Tier 1 (Cache-based)**: Uses local cache, instant response, zero API calls
+- **Tier 2 (API-based)**: Makes OPSI API calls, 1-30 second response
+- **Tier 3 (Database)**: Connects to database directly (future)
+
+### Programmatic Skill Tools
+
+#### Discovery Tools (Tier 1 - INSTANT)
+
+```python
+# Discover all databases with filters
+skill_discover_databases(
+    compartment_id="ocid1.compartment...",  # optional
+    region="us-ashburn-1",                   # optional
+    db_type="adb",                           # optional: adb, base, exadata
+    limit=50                                 # optional
+)
+
+# Get high-level fleet summary
+skill_get_fleet_summary()
+# Returns: total, by_type, by_state, by_region, total_cpu, total_storage
+
+# Search databases by name or OCID
+skill_search_databases(query="prod", limit=20)
+
+# Get database by exact name
+skill_get_database_by_name(name="PRODDB")
+```
+
+#### Performance Tools (Tier 2)
+
+```python
+# Analyze CPU usage with trend detection
+skill_analyze_cpu_usage(
+    database_id="ocid1.databaseinsight...",
+    hours_back=24
+)
+# Returns: current_usage, average_usage, peak_usage, trend, recommendations
+
+# Analyze memory usage
+skill_analyze_memory_usage(database_id="...", hours_back=24)
+
+# Analyze I/O performance
+skill_analyze_io_performance(database_id="...", hours_back=24)
+
+# Get comprehensive performance summary (all metrics)
+skill_get_performance_summary(database_id="...", hours_back=24)
+# Returns CPU, memory, and I/O analysis in one call
+```
+
+#### Cost Optimization Tools (Tier 2)
+
+```python
+# Find cost-saving opportunities
+skill_find_cost_opportunities(
+    compartment_id=None,        # optional filter
+    min_savings_usd=50.0,       # minimum savings threshold
+    limit=20
+)
+# Identifies: rightsizing, scheduling, storage, unused resources
+
+# Get savings summary
+skill_get_savings_summary(compartment_id=None)
+# Returns: total_opportunities, total_monthly_savings, by_type, by_confidence
+```
+
+#### Skill Discovery
+
+```python
+# List all programmatic skills
+list_programmatic_skills()
+
+# Get skill recommendations for a query
+get_skill_recommendations("What databases are over-provisioned?")
+# Returns recommended skills and tools to use
+```
+
+### Usage Example
+
+```python
+# 1. Start with fleet discovery (Tier 1 - instant)
+summary = skill_get_fleet_summary()
+# → {"total": 42, "by_type": {"adb": 15, "base": 27}, ...}
+
+# 2. Find a specific database
+db = skill_get_database_by_name("PRODDB")
+# → {"ocid": "ocid1...", "name": "PRODDB", "db_type": "adb", ...}
+
+# 3. Analyze its performance (Tier 2)
+perf = skill_get_performance_summary(db["ocid"], hours_back=24)
+# → {"cpu": {"current": 45, "peak": 78, "trend": "stable"}, ...}
+
+# 4. Find cost opportunities across fleet
+savings = skill_get_savings_summary()
+# → {"total_monthly_savings": 1250.00, "top_opportunities": [...]}
+```
+
+---
+
+## Markdown Skills (v1)
+
+Markdown skills provide guidance and context for DBA workflows.
+
+### What are Markdown Skills?
 
 Skills are specialized instruction sets that teach Claude how to perform specific DBA tasks. They follow the [Anthropic Skills specification](https://github.com/anthropics/skills) and provide:
 

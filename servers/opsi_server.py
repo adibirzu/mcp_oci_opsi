@@ -14,12 +14,20 @@ Rate Limits: OCI API limits apply (~100 requests/minute)
 
 from typing import Any, Dict, List, Optional, Literal
 from datetime import datetime, timedelta
+import logging
 
 from fastmcp import FastMCP, Context
 from fastmcp.exceptions import ToolError
 from fastmcp.tools.tool import ToolAnnotations
 
-from ..oci_clients import get_opsi_client, list_all, extract_region_from_ocid
+from ..oci_clients import get_opsi_client, extract_region_from_ocid
+
+logger = logging.getLogger(__name__)
+
+MAX_PAGE_LIMIT = 100
+MAX_DAYS_BACK = 90
+MAX_PCT = 100.0
+MIN_PCT = 0.0
 
 
 # Create OPSI sub-server
@@ -41,6 +49,98 @@ def _get_time_range(days_back: int = 7) -> tuple:
     end_time = datetime.utcnow()
     start_time = end_time - timedelta(days=days_back)
     return start_time, end_time
+
+
+def _validate_limit_offset(limit: int, offset: int) -> None:
+    if limit < 1 or limit > MAX_PAGE_LIMIT:
+        raise ToolError(f"limit must be between 1 and {MAX_PAGE_LIMIT}")
+    if offset < 0:
+        raise ToolError("offset must be >= 0")
+
+
+def _validate_days_back(days_back: int) -> None:
+    if days_back < 1 or days_back > MAX_DAYS_BACK:
+        raise ToolError(f"days_back must be between 1 and {MAX_DAYS_BACK}")
+
+
+def _validate_pct(pct: float) -> None:
+    if pct < MIN_PCT or pct > MAX_PCT:
+        raise ToolError(f"database_time_pct_greater_than must be between {MIN_PCT} and {MAX_PCT}")
+
+
+def _validate_ocid(ocid: Optional[str], field: str) -> None:
+    if not ocid or not isinstance(ocid, str) or not ocid.startswith("ocid1."):
+        raise ToolError(f"{field} must be a valid OCID (starting with ocid1.)")
+
+
+def _paginate_with_offset(getter, limit: int, offset: int, **kwargs) -> tuple[list, dict]:
+    """Fetch OCI list results honoring limit/offset without loading entire tenancy."""
+    _validate_limit_offset(limit, offset)
+
+    results: list = []
+    seen = 0
+    page_token = None
+
+    while len(results) < limit:
+        # fetch only what we still need (plus any skipped offset)
+        remaining_needed = (offset + limit) - seen
+        page_limit = max(1, min(MAX_PAGE_LIMIT, remaining_needed))
+
+        response = getter(limit=page_limit, page=page_token, **kwargs)
+        items = getattr(response, "data", []) or []
+
+        if not items:
+            break
+
+        for item in items:
+            if seen < offset:
+                seen += 1
+                continue
+            if len(results) >= limit:
+                break
+            results.append(item)
+            seen += 1
+
+        page_token = getattr(response, "next_page", None) or getattr(response, "opc_next_page", None)
+        if not page_token:
+            break
+
+    has_more = bool(page_token)
+    pagination = {
+        "limit": limit,
+        "offset": offset,
+        "has_more": has_more,
+        "next_offset": offset + len(results) if has_more else None,
+        "total_count": seen if not has_more else None,  # unknown when there are more pages
+    }
+    return results, pagination
+
+
+def _raise_tool_error(context: str, error: Exception) -> None:
+    logger.exception("OPSI tool failed: %s", context, exc_info=error)
+    raise ToolError(f"Unable to {context} right now. Please retry with a smaller scope or later.")
+
+
+RATE_LIMIT_HINT = "OCI OPSI ~100 req/min; use smaller limits and backoff (2s, 4s, 8s) if throttled."
+
+
+@opsi_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
+async def health(ctx: Context = None) -> Dict[str, Any]:
+    """Lightweight readiness check without calling OCI."""
+    if ctx:
+        await ctx.debug("OPSI health check")
+    return {
+        "status": "ok",
+        "rate_limit_hint": RATE_LIMIT_HINT,
+        "note": "No OCI calls made; safe for readiness probes.",
+    }
 
 
 @opsi_server.tool(
@@ -83,19 +183,22 @@ async def list_database_insights(
         await ctx.info(f"Listing database insights in compartment")
 
     try:
+        _validate_ocid(compartment_id, "compartment_id")
+        _validate_limit_offset(limit, offset)
         opsi_client = get_opsi_client()
 
-        kwargs = {"compartment_id": compartment_id, "limit": min(limit + offset, 1000)}
+        kwargs = {"compartment_id": compartment_id}
         if database_type:
             kwargs["database_type"] = [database_type]
         if status:
             kwargs["status"] = [status]
 
-        all_results = list_all(opsi_client.list_database_insights, **kwargs)
-        total_count = len(all_results)
-
-        # Apply pagination
-        paginated = all_results[offset:offset + limit]
+        paginated, pagination = _paginate_with_offset(
+            opsi_client.list_database_insights,
+            limit=limit,
+            offset=offset,
+            **kwargs,
+        )
 
         databases = []
         for db in paginated:
@@ -114,20 +217,16 @@ async def list_database_insights(
             "databases": databases,
             "count": len(databases),
             "compartment_id": compartment_id,
-            "pagination": {
-                "limit": limit,
-                "offset": offset,
-                "total_count": total_count,
-                "has_more": offset + limit < total_count,
-                "next_offset": offset + limit if offset + limit < total_count else None,
-            },
+            "pagination": pagination,
+            "rate_limit_hint": RATE_LIMIT_HINT,
         }
 
         if format == "markdown":
+            total_display = pagination["total_count"] if pagination["total_count"] is not None else "unknown"
             md = f"""## Database Insights
 
 **Compartment:** `{compartment_id[:30]}...`
-**Total:** {total_count} | **Showing:** {offset + 1} - {offset + len(databases)}
+**Total:** {total_display} | **Showing:** {offset + 1} - {offset + len(databases)}
 
 | Name | Type | Status | Version |
 |------|------|--------|---------|
@@ -136,14 +235,16 @@ async def list_database_insights(
                 md += f"| {db.get('database_name', 'N/A')} | {db.get('database_type', 'N/A')} | {db.get('status', 'N/A')} | {db.get('database_version', 'N/A')} |\n"
 
             if data["pagination"]["has_more"]:
-                md += f"\n*Use offset={data['pagination']['next_offset']} for next page*"
+                md += f"\n*Use offset={data['pagination']['next_offset']} for next page (limit {MAX_PAGE_LIMIT})*"
 
             return {"markdown": md, "data": data}
 
         return data
 
+    except ToolError:
+        raise
     except Exception as e:
-        raise ToolError(f"Failed to list database insights: {e}")
+        _raise_tool_error("list database insights", e)
 
 
 @opsi_server.tool(
@@ -185,6 +286,12 @@ async def summarize_sql_insights(
         await ctx.info("Analyzing SQL insights for anomalies...")
 
     try:
+        _validate_ocid(compartment_id, "compartment_id")
+        if database_id:
+            _validate_ocid(database_id, "database_id")
+        _validate_days_back(days_back)
+        _validate_pct(database_time_pct_greater_than)
+
         opsi_client = get_opsi_client()
         start_time, end_time = _get_time_range(days_back)
 
@@ -221,8 +328,10 @@ async def summarize_sql_insights(
             },
         }
 
+    except ToolError:
+        raise
     except Exception as e:
-        raise ToolError(f"Failed to get SQL insights: {e}")
+        _raise_tool_error("summarize SQL insights", e)
 
 
 @opsi_server.tool(
@@ -552,15 +661,20 @@ async def list_host_insights(
         await ctx.info("Listing host insights...")
 
     try:
+        _validate_ocid(compartment_id, "compartment_id")
+        _validate_limit_offset(limit, offset)
         opsi_client = get_opsi_client()
 
-        kwargs = {"compartment_id": compartment_id, "limit": min(limit + offset, 1000)}
+        kwargs = {"compartment_id": compartment_id}
         if status:
             kwargs["status"] = [status]
 
-        all_results = list_all(opsi_client.list_host_insights, **kwargs)
-        total_count = len(all_results)
-        paginated = all_results[offset:offset + limit]
+        paginated, pagination = _paginate_with_offset(
+            opsi_client.list_host_insights,
+            limit=limit,
+            offset=offset,
+            **kwargs,
+        )
 
         hosts = []
         for host in paginated:
@@ -577,19 +691,15 @@ async def list_host_insights(
         data = {
             "hosts": hosts,
             "count": len(hosts),
-            "pagination": {
-                "limit": limit,
-                "offset": offset,
-                "total_count": total_count,
-                "has_more": offset + limit < total_count,
-                "next_offset": offset + limit if offset + limit < total_count else None,
-            },
+            "pagination": pagination,
+            "rate_limit_hint": RATE_LIMIT_HINT,
         }
 
         if format == "markdown":
+            total_display = pagination["total_count"] if pagination["total_count"] is not None else "unknown"
             md = f"""## Host Insights
 
-**Total:** {total_count} | **Showing:** {offset + 1} - {offset + len(hosts)}
+**Total:** {total_display} | **Showing:** {offset + 1} - {offset + len(hosts)}
 
 | Host Name | Type | Platform | Status |
 |-----------|------|----------|--------|
@@ -598,14 +708,16 @@ async def list_host_insights(
                 md += f"| {host.get('host_name', 'N/A')} | {host.get('host_type', 'N/A')} | {host.get('platform_type', 'N/A')} | {host.get('status', 'N/A')} |\n"
 
             if data["pagination"]["has_more"]:
-                md += f"\n*Use offset={data['pagination']['next_offset']} for next page*"
+                md += f"\n*Use offset={data['pagination']['next_offset']} for next page (limit {MAX_PAGE_LIMIT})*"
 
             return {"markdown": md, "data": data}
 
         return data
 
+    except ToolError:
+        raise
     except Exception as e:
-        raise ToolError(f"Failed to list host insights: {e}")
+        _raise_tool_error("list host insights", e)
 
 
 @opsi_server.tool(

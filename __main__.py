@@ -18,6 +18,14 @@ Compatible with all LLM clients:
 """
 
 import os
+import sys
+import logging
+
+from .logging_config import configure_logging
+
+# Configure logging early for all MCP server variants
+configure_logging()
+logger = logging.getLogger(__name__)
 
 # Allow version selection via environment variable
 # Default to v2 (FastMCP server) so the MCP server starts correctly when launched by clients.
@@ -29,4 +37,9 @@ else:
     from .main_v3 import main
 
 if __name__ == "__main__":
-    main()
+    try:
+        logger.info("Launching MCP OCI OPSI server", extra={"version": version})
+        main()
+    except Exception as exc:
+        logger.exception("MCP server failed to start", exc_info=exc)
+        sys.exit(1)

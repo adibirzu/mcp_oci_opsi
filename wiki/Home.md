@@ -1,37 +1,27 @@
 # Welcome to MCP OCI OPSI Server Wiki
 
-**Enhanced MCP server for Oracle Cloud Infrastructure Operations Insights and Database Management**
+**MCP server for Oracle Cloud Infrastructure Operations Insights and Database Management (v3)**
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/your-org/mcp-oci-opsi)
-[![Tools](https://img.shields.io/badge/tools-117-green.svg)](./API-Coverage)
-[![Coverage](https://img.shields.io/badge/API%20coverage-52%25-yellow.svg)](./API-Coverage)
+[![Version](https://img.shields.io/badge/version-3.0.0-blue.svg)](../README.md)
 
 ---
 
 ## 🚀 Quick Links
 
-- **[Installation Guide](./Installation)** - Get started in 5 minutes
-- **[Configuration](./Configuration)** - Configure for your environment
+- **[Installation](./Installation)** - Get started quickly
+- **[Configuration](./Configuration)** - OCI auth + transport options
 - **[Quick Start](./Quick-Start)** - Common usage examples
-- **[Tool Reference](./Tool-Reference)** - Complete tool catalog (117 tools)
-- **[API Coverage](./API-Coverage)** - Detailed API coverage report
 - **[Troubleshooting](./Troubleshooting)** - Common issues and solutions
+- **[API Coverage](./API-Coverage)** - Detailed API coverage report
 
 ---
 
-## 📊 What's New in v2.0
+## 📊 What's New in v3
 
-### Major Enhancements (November 2025)
-
-✨ **18 New APIs** for detailed database analysis
-✨ **Agent Detection** - Automatic MACS vs Cloud Agent classification
-✨ **Multi-Tenancy** - Support for multiple OCI accounts
-✨ **Enhanced Analytics** - Resource stats, user mgmt, tablespace monitoring, AWR metrics
-
-**Statistics:**
-- Tool Count: 99 → **117** (+18%)
-- API Coverage: 48% → **52%**
-- Test Success: **100%**
+- Structured logging + health tools for all sub-servers
+- Async cache build tasks (`cache_start_cache_build_task` + `cache_get_task_status`)
+- Prebuilt prompts and troubleshooting playbook for cache-first DBA workflows
+- Pagination + rate-limit hints on OPSI/DBM tools for safer large-tenancy usage
 
 ---
 
@@ -56,22 +46,10 @@
 
 ### Enhanced Features
 
-#### 🤖 Agent Detection
-- Automatic MACS vs Cloud Agent identification
-- Priority-based classification
-- API compatibility matrix
-- Migration recommendations
-
-#### 👥 Multi-Tenancy
-- Multiple OCI account support
-- Interactive profile selection
-- No environment changes needed
-
-#### 📈 Advanced Analytics
-- Resource statistics & trends
-- User privilege auditing
-- Tablespace growth patterns
-- AWR metrics analysis
+- Cache-first workflow (zero API calls) with async background builds
+- Prompt templates and troubleshooting playbook for guided tool use
+- Health/readiness tools for cache/OPSI/DBM/admin servers
+- Multi-tenancy via OCI CLI profiles
 
 ---
 
@@ -91,14 +69,8 @@
 9. **[AWR Analysis](./AWR-Analysis)** - Performance troubleshooting
 
 ### Reference
-10. **[Tool Reference](./Tool-Reference)** - Complete tool catalog
-11. **[API Coverage](./API-Coverage)** - API coverage details
-12. **[Performance](./Performance)** - Benchmarks and optimization
-
-### Advanced
-13. **[Development](./Development)** - Contributing and development
-14. **[Troubleshooting](./Troubleshooting)** - Common issues
-15. **[FAQ](./FAQ)** - Frequently asked questions
+10. **[API Coverage](./API-Coverage)** - API coverage details
+11. **[Troubleshooting](./Troubleshooting)** - Common issues
 
 ---
 

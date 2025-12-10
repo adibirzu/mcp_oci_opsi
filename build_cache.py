@@ -22,7 +22,7 @@ Usage:
     $ python3 build_cache.py --select-profile
 
 Example:
-    $ export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..aaa...,ocid1.compartment.oc1..bbb..."
+    $ export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..example...,ocid1.compartment.oc1..example..."
     $ python3 build_cache.py --profile tenancy1
 """
 

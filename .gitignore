@@ -55,6 +55,7 @@ sqlnet.ora
 *_cache.json
 cache/
 *.cache
+.mcp_oci_opsi_cache_enhanced_*.json
 
 # Tenancy review reports - contain sensitive tenant/compartment/database info
 tenancy_review_*.json

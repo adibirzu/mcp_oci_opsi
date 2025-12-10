@@ -3,9 +3,9 @@ name = "mcp-oci-opsi"
 version = "3.0.0"
 description = "MCP server for Oracle Cloud Infrastructure Operations Insights - Enhanced with MCP and OCA Auth Bridge"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
-    "mcp>=0.1.0",
+    "fastmcp>=2.0.0",
     "oci>=2.100.0",
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
@@ -24,7 +24,6 @@ database = [
 ]
 auth = [
     "cryptography>=41.0.0",
-    "key-value-aio>=0.1.0",
     "PyJWT>=2.8.0",
 ]
 
@@ -39,3 +38,6 @@ target-version = ["py310"]
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

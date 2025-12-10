@@ -10,6 +10,7 @@ Follows MCP Best Practices:
 
 from typing import Any, Dict, List, Optional
 import os
+import logging
 
 from fastmcp import FastMCP, Context
 from fastmcp.exceptions import ToolError
@@ -32,6 +33,9 @@ from ..auth.oci_oauth import (
     generate_encryption_key,
     generate_jwt_signing_key,
 )
+from ..cache import get_cache
+
+logger = logging.getLogger(__name__)
 
 
 # Create admin sub-server
@@ -45,6 +49,57 @@ admin_server = FastMCP(
     Rate Limits: Unlimited (no API calls except validate_oci_profile).
     """,
 )
+
+# Prebuilt troubleshooting answers (local, no API calls)
+TROUBLESHOOTING_PLAYBOOK = [
+    {
+        "issue": "High CPU on database",
+        "recommendation": "Check fleet summary, then SQL insights and ADDM findings for the database.",
+        "tools": [
+            {"name": "cache_get_fleet_summary", "reason": "Instant view of which DBs are hot"},
+            {"name": "opsi_summarize_sql_insights", "reason": "Find top SQL contributing to CPU"},
+            {"name": "opsi_summarize_addm_db_findings", "reason": "Get ADDM recommendations"},
+            {"name": "dbm_get_awr_report", "reason": "Deep dive if needed"},
+        ],
+    },
+    {
+        "issue": "Storage nearly full",
+        "recommendation": "Inspect tablespace usage and historical capacity trend.",
+        "tools": [
+            {"name": "dbm_get_tablespace_usage", "reason": "See current free/used per tablespace"},
+            {"name": "opsi_get_database_capacity_trend", "reason": "Understand growth history"},
+            {"name": "opsi_get_database_resource_forecast", "reason": "Predict when it will run out"},
+        ],
+    },
+    {
+        "issue": "Slow SQL performance",
+        "recommendation": "Identify regressed SQL and plan changes, then review execution plans.",
+        "tools": [
+            {"name": "opsi_summarize_sql_insights", "reason": "Spot anomalous or regressed SQL"},
+            {"name": "opsi_summarize_sql_plan_insights", "reason": "Compare execution plans"},
+            {"name": "dbm_get_awr_report", "reason": "Deep workload analysis"},
+        ],
+    },
+    {
+        "issue": "Fleet overview / inventory",
+        "recommendation": "Use cache-first tools for zero-API discovery.",
+        "tools": [
+            {"name": "cache_get_fleet_summary", "reason": "Instant counts and breakdowns"},
+            {"name": "cache_search_databases", "reason": "Find DBs by name/compartment instantly"},
+            {"name": "opsi_list_database_insights", "reason": "Live list with pagination if needed"},
+        ],
+    },
+    {
+        "issue": "Agent readiness / connectivity",
+        "recommendation": "Verify MCP health and credentials before running diagnostics.",
+        "tools": [
+            {"name": "ping", "reason": "Cheap readiness check"},
+            {"name": "whoami", "reason": "Confirm identity and profile"},
+            {"name": "opsi_health", "reason": "OPSI tool availability"},
+            {"name": "dbm_health", "reason": "DBM tool availability"},
+        ],
+    },
+]
 
 
 @admin_server.tool(
@@ -74,6 +129,7 @@ async def ping(ctx: Context = None) -> Dict[str, Any]:
         "message": "MCP OCI OPSI Server is running",
         "version": "3.0.0",
         "auth_mode": detect_auth_mode().value,
+        "cache_last_updated": get_cache().cache_data.get("metadata", {}).get("last_updated"),
     }
 
 
@@ -115,6 +171,107 @@ async def whoami(ctx: Context = None) -> Dict[str, Any]:
 
     except Exception as e:
         raise ToolError(f"Failed to get user information: {e}")
+
+
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
+async def get_troubleshooting_playbook(issue: Optional[str] = None, ctx: Context = None) -> Dict[str, Any]:
+    """
+    Get prebuilt troubleshooting answers and recommended tools.
+
+    Args:
+        issue: Optional keyword (e.g., "CPU", "storage", "sql", "fleet", "health")
+
+    Returns:
+        Playbook entries with recommended tools and reasons
+
+    Examples:
+        - get_troubleshooting_playbook()
+        - get_troubleshooting_playbook(issue="cpu")
+    """
+    if ctx:
+        await ctx.info("Retrieving troubleshooting playbook")
+
+    filtered = TROUBLESHOOTING_PLAYBOOK
+    if issue:
+        key = issue.lower()
+        filtered = [entry for entry in TROUBLESHOOTING_PLAYBOOK if key in entry["issue"].lower()]
+
+    return {
+        "count": len(filtered),
+        "entries": filtered,
+        "notes": "Use cache_* tools first where available; rate limits may apply on live OPSI/DBM calls.",
+    }
+
+
+@admin_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=True,
+    )
+)
+async def list_prompts(ctx: Context = None) -> Dict[str, Any]:
+    """
+    List prebuilt prompt templates for common DBA troubleshooting flows.
+
+    Returns:
+        Prompt definitions with name, description, and template text.
+    """
+    if ctx:
+        await ctx.debug("Listing prompt templates")
+
+    prompts = [
+        {
+            "name": "cpu-hotspot",
+            "description": "Guide the model to diagnose high-CPU databases using cache then OPSI/DBM tools.",
+            "template": (
+                "You are diagnosing high CPU on Oracle databases. "
+                "First call cache_get_fleet_summary and cache_search_databases to identify hot DBs. "
+                "Then use opsi_summarize_sql_insights and opsi_summarize_addm_db_findings on the target DB. "
+                "If issues persist, pull dbm_get_awr_report for deep dive. "
+                "Always recommend actions with thresholds (CPU >80%)."
+            ),
+        },
+        {
+            "name": "storage-capacity",
+            "description": "Capacity troubleshooting prompt using tablespace and OPSI growth data.",
+            "template": (
+                "Investigate storage risk. Start with cache_get_fleet_summary to find DBs near limits. "
+                "Use dbm_get_tablespace_usage to see free/used, then "
+                "opsi_get_database_capacity_trend and opsi_get_database_resource_forecast for growth/forecast. "
+                "Recommend remediation (reclaim, add space, move objects)."
+            ),
+        },
+        {
+            "name": "slow-sql",
+            "description": "SQL performance triage flow.",
+            "template": (
+                "Triage slow SQL. Use cache_search_databases to locate the DB, then "
+                "opsi_summarize_sql_insights (days_back<=30) to find regressed SQL. "
+                "If a SQL ID is identified, call opsi_summarize_sql_plan_insights for plan deltas. "
+                "Escalate to dbm_get_awr_report only if needed. Provide actions (index, hint, plan baseline)."
+            ),
+        },
+        {
+            "name": "fleet-overview",
+            "description": "Quick fleet inventory using cache-first tools.",
+            "template": (
+                "Provide a concise fleet overview. Call cache_get_fleet_summary and cache_search_databases "
+                "for counts by type/compartment and any disabled or problematic DBs. "
+                "Only use live OPSI listing if cache is missing."
+            ),
+        },
+    ]
+
+    return {"count": len(prompts), "prompts": prompts}
 
 
 @admin_server.tool(

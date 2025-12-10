@@ -21,7 +21,7 @@ Usage:
     $ python3 build_enhanced_cache.py --profile production
 
     # Scan specific compartment only (optional)
-    $ python3 build_enhanced_cache.py --compartment ocid1.compartment.oc1..aaa...
+    $ python3 build_enhanced_cache.py --compartment ocid1.compartment.oc1..example...
 
 Example:
     $ python3 build_enhanced_cache.py

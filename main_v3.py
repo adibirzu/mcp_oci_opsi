@@ -15,23 +15,33 @@ a command-line interface for database discovery operations.
 import os
 import sys
 import argparse
+import logging
 from typing import Optional
 
-# Add current directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add parent directory to path to allow imports from mcp_oci_opsi package
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import oci
 from dotenv import load_dotenv
 
 # Load environment variables
 load_dotenv()
+try:
+    from mcp_oci_opsi.logging_config import configure_logging
+except ImportError:
+    # Fallback if run in a way where relative imports work or path is different
+    from .logging_config import configure_logging
+
+# Ensure logging configured if main_v3.py invoked directly
+configure_logging()
 
 # Import enhanced config and cache for initialization
 from mcp_oci_opsi import config_enhanced
 from mcp_oci_opsi import cache_enhanced
 from mcp_oci_opsi import skills_loader
-from mcp_oci_opsi import enhanced_database_discovery
+from mcp_oci_opsi.scripts import enhanced_database_discovery
 
+logger = logging.getLogger(__name__)
 
 def initialize_server():
     """
@@ -43,6 +53,7 @@ def initialize_server():
     3. Ensure multi-tenancy setup is ready
     """
     print("\n🚀 Initializing MCP OCI OPSI Server...")
+    logger.info("Initializing MCP OCI OPSI Server (v3)")
 
     # Load skills first
     print("📚 Loading DBA skills...")
@@ -50,8 +61,10 @@ def initialize_server():
         skills_loader_instance = skills_loader.get_skills_loader()
         skills = skills_loader_instance.list_skills()
         print(f"✅ Loaded {len(skills)} DBA skills")
+        logger.info("Skills loaded", extra={"count": len(skills)})
     except Exception as e:
         print(f"⚠️  Skills loading error: {e}")
+        logger.exception("Skills loading error", exc_info=e)
 
     # Build cache for all available profiles
     print("\n💾 Building database cache for all profiles...")
@@ -73,14 +86,13 @@ def initialize_server():
             tenancy_ocid = config['tenancy']
 
             # Initialize cache for this profile
-            cache = cache_enhanced.get_enhanced_cache()
+            cache = cache_enhanced.get_enhanced_cache(profile=profile_name)
 
-            # Demo override: force OPSI scans to London for 'emdemo' profile
-            # This is read by get_opsi_client() and only affects OPSI API calls
-            region_override = None
-            if profile_name.lower() == "emdemo":
-                region_override = "uk-london-1"
+            # Optional region override via env to support targeted discovery without hardcoding
+            region_override = os.getenv("OPSI_INIT_REGION_OVERRIDE")
+            if region_override:
                 os.environ["MCP_OPSI_REGION_OVERRIDE"] = region_override
+                print(f"   🌍 Using region override for OPSI: {region_override}")
 
             # Check if cache needs updating (older than 24 hours)
             import time
@@ -91,7 +103,11 @@ def initialize_server():
                 now_utc = datetime.now(timezone.utc)
                 cache_age_hours = (now_utc - cache_time).total_seconds() / 3600
 
-            if cache_age_hours > 24 or not cache.cache_data.get('databases'):
+            init_mode = os.getenv("OPSI_INIT_MODE", "light").lower()  # none | light | full
+            skip_build = init_mode in ("none", "light")
+            if skip_build:
+                print(f"   ⚙️  OPSI_INIT_MODE={init_mode} -> skipping cache build for fast startup")
+            if (not skip_build) and (cache_age_hours > 24 or not cache.cache_data.get('databases')):
                 print(f"   📊 Building fresh cache for {profile_name}...")
                 # Run cache building synchronously but with timeout to avoid blocking
                 import signal
@@ -129,6 +145,7 @@ def initialize_server():
 
         except Exception as e:
             print(f"   ❌ Cache build failed for {profile_name}: {e}")
+            logger.exception("Cache build failed", exc_info=e, extra={"profile": profile_name})
 
     print("🎯 MCP OCI OPSI Server initialization complete!\n")
 
@@ -149,7 +166,7 @@ def run_discovery(profile: Optional[str] = None, region: Optional[str] = None,
 def show_fleet_summary():
     """Show instant fleet summary from cache."""
     try:
-        from mcp_oci_opsi.tools_cache import get_fleet_summary
+        from mcp_oci_opsi.tools.tools_cache import get_fleet_summary
         summary = get_fleet_summary()
         print("\n📊 Fleet Summary:")
         print(f"   Databases: {summary.get('total_databases', 0)}")
@@ -164,7 +181,7 @@ def show_fleet_summary():
 def show_available_skills():
     """Show available DBA skills."""
     try:
-        from mcp_oci_opsi.tools_skills import list_available_skills
+        from mcp_oci_opsi.tools.tools_skills import list_available_skills
         skills = list_available_skills()
         print(f"\n🎯 Available DBA Skills: {skills.get('count', 0)}")
         for skill in skills.get('skills', []):
@@ -323,7 +340,7 @@ def main():
     print("  • Skills-based DBA guidance")
     print("\nExamples:")
     print("  # Discover databases in specific compartments")
-    print("  python main_v3.py --command discover --compartments ocid1.compartment.oc1..xxx")
+    print("  python main_v3.py --command discover --compartments ocid1.compartment.oc1..example")
     print("  # Run London discovery for OPSI databases")
     print("  python main_v3.py --command london --profile emdemo")
 

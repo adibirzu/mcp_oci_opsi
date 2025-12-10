@@ -16,7 +16,7 @@ Features:
 Usage:
     python3 tenancy_review.py
     python3 tenancy_review.py --profile emdemo
-    python3 tenancy_review.py --compartment ocid1.compartment.oc1..aaa...
+    python3 tenancy_review.py --compartment ocid1.compartment.oc1..example...
     python3 tenancy_review.py --regions us-phoenix-1,uk-london-1  # Specific regions only
 """
 
@@ -29,7 +29,8 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 # Add parent directory to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
+# Need to go up 2 levels (scripts -> mcp_oci_opsi -> root) to allow 'from mcp_oci_opsi...'
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from mcp_oci_opsi.cache import DatabaseCache
 from mcp_oci_opsi.config import get_oci_config, list_available_profiles
@@ -55,7 +56,13 @@ class TenancyReviewer:
         self.config = get_oci_config()
         self.home_region = self.config.get("region")
         self.identity_client = oci.identity.IdentityClient(self.config)
-        self.cache = DatabaseCache()
+        
+        # Use profile-specific cache file
+        profile_name = os.getenv("OCI_CLI_PROFILE", "DEFAULT")
+        safe_profile = profile_name.replace(" ", "_").replace("/", "_")
+        cache_path = Path.home() / f".mcp_oci_opsi_cache_{safe_profile}.json"
+        self.cache = DatabaseCache(cache_file=str(cache_path))
+        
         self.target_compartment = compartment_id
         self.target_regions = regions
 

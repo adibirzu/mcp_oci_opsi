@@ -12,11 +12,20 @@ Follows MCP Best Practices:
 """
 
 from typing import Any, Dict, List, Optional, Literal
+import threading
+import uuid
+import logging
 
 from fastmcp import FastMCP, Context
 from fastmcp.tools.tool import ToolAnnotations
+from fastmcp.exceptions import ToolError
 
 from ..cache import get_cache, DatabaseCache
+
+logger = logging.getLogger(__name__)
+
+# Simple in-memory task registry for long-running cache/discovery operations
+TASKS: Dict[str, Dict[str, Any]] = {}
 
 
 # Create cache sub-server
@@ -31,6 +40,25 @@ cache_server = FastMCP(
     Rate Limits: Unlimited (no API calls).
     """,
 )
+
+
+def _start_task(name: str, target, *args, **kwargs) -> str:
+    task_id = str(uuid.uuid4())
+    TASKS[task_id] = {"id": task_id, "name": name, "status": "running", "result": None}
+
+    def runner():
+        try:
+            result = target(*args, **kwargs)
+            TASKS[task_id]["status"] = "completed"
+            TASKS[task_id]["result"] = result
+        except Exception as exc:
+            logger.exception("Task %s failed", name, exc_info=exc)
+            TASKS[task_id]["status"] = "failed"
+            TASKS[task_id]["error"] = str(exc)
+
+    thread = threading.Thread(target=runner, daemon=True)
+    thread.start()
+    return task_id
 
 
 @cache_server.tool(
@@ -103,6 +131,71 @@ async def get_fleet_summary(
         return {"markdown": md, "data": data}
 
     return data
+
+
+@cache_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=False,
+        destructive_hint=False,
+        idempotent_hint=False,
+        open_world_hint=False,
+    )
+)
+async def start_cache_build_task(
+    compartment_ids: List[str],
+    ctx: Context = None,
+) -> Dict[str, Any]:
+    """
+    Start an asynchronous cache build task (non-blocking).
+
+    Args:
+        compartment_ids: List of root compartment OCIDs to scan
+
+    Returns:
+        Task ID to poll with get_task_status
+
+    Examples:
+        - start_cache_build_task(compartment_ids=["ocid1.compartment..."])
+    """
+    if ctx:
+        await ctx.info("Starting cache build task")
+
+    cache = get_cache()
+    cache.load()
+
+    task_id = _start_task("cache_build", cache.build_cache, compartment_ids)
+
+    return {"task_id": task_id, "status": "running"}
+
+
+@cache_server.tool(
+    annotations=ToolAnnotations(
+        read_only_hint=True,
+        destructive_hint=False,
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
+async def get_task_status(task_id: str, ctx: Context = None) -> Dict[str, Any]:
+    """
+    Get status of a background task started by this server.
+
+    Args:
+        task_id: Task identifier returned by start_cache_build_task
+
+    Returns:
+        Task status, result (if completed), or error (if failed)
+
+    Examples:
+        - get_task_status(task_id="...uuid...")
+    """
+    if ctx:
+        await ctx.debug(f"Checking task status {task_id}")
+
+    task = TASKS.get(task_id)
+    if not task:
+        raise ToolError(f"Task {task_id} not found")
+    return task
 
 
 @cache_server.tool(

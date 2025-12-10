@@ -2,9 +2,9 @@
 
 **Version 3.0** | **FastMCP 2.0** | **13 DBA Skills** | **OAuth + API Key Auth** | **Multi-Tenancy**
 
-MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operations Insights. This server provides comprehensive Oracle database monitoring and analysis capabilities through Claude Desktop, Claude Code, or any MCP-compatible client.
+MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operations Insights. This server provides comprehensive Oracle database monitoring and analysis capabilities through Claude Desktop, Claude Code, ChatGPT, or any MCP-compatible client (stdio or HTTP transports).
 
-> **Quick Links**: [Installation](#installation) | [Quick Start](#quick-start) | [OCI VM Deployment](#oci-vm-deployment) | [API Reference](#available-tools)
+> **Quick Links**: [Installation](#installation) | [Quick Start](#quick-start) | [Startup & Transports](#startup--transports) | [Prompts & Playbooks](#prompts--playbooks) | [OCI VM Deployment](#oci-vm-deployment) | [API Reference](#available-tools)
 >
 > **Guides**: [Skills Guide](./SKILLS_GUIDE.md) | [FastMCP v3 Guide](./FASTMCP_V3_GUIDE.md) | [OCI Deployment Guide](./docs/OCI_VM_DEPLOYMENT.md)
 
@@ -50,6 +50,18 @@ Get detailed information about any specific database:
 | **DBA Skills** | 13 specialized skills for token-efficient workflows |
 | **Disk-Based Storage** | No Redis required - encrypted file storage |
 | **OCI VM Ready** | Terraform scripts for automated deployment |
+| **Async Tasks** | Background cache builds (`cache_start_cache_build_task`) with polling |
+| **Prebuilt Playbooks** | `admin_get_troubleshooting_playbook` and `admin_list_prompts` for fast LLM guidance |
+
+---
+
+## Startup & Transports
+
+- **stdio (default)**: `python -m mcp_oci_opsi` (best for Claude Desktop/Code, ChatGPT MCP).
+- **HTTP**: `MCP_TRANSPORT=http MCP_HTTP_PORT=8000 python -m mcp_oci_opsi` (for remote clients).
+- **Version switch**: `MCP_VERSION=v2` (FastMCP 2.x stdio/http), `MCP_VERSION=v3` (enhanced init + cache build).
+- **Logging**: Set `LOG_LEVEL=DEBUG` for verbose startup; OCI SDK logs default to WARNING.
+- **Timeouts**: `OCI_CLIENT_TIMEOUT`, `OPSI_CLIENT_TIMEOUT`, `DBM_CLIENT_TIMEOUT` (seconds) bound per-call latency; `MCP_CLIENT_TIMEOUT_MS` caps tool invocations.
 
 ---
 
@@ -135,13 +147,13 @@ Get detailed information about any specific database:
 
 ### Tool Organization (v3.0)
 
-| Prefix | Server | Tools | Resources | Description |
-|--------|--------|-------|-----------|-------------|
-| `cache_` | cache-tools | 8 | 4 | Instant operations (zero API calls) |
-| `opsi_` | opsi-tools | 9 | 1 | Operations Insights analytics |
-| `dbm_` | dbm-tools | 8 | 2 | Database Management operations |
-| `admin_` | admin-tools | 10 | 3 | Profile and configuration |
-| *(none)* | main | 5 | 1 | Skills tools + welcome resource |
+| Prefix | Server | Description |
+|--------|--------|-------------|
+| `cache_` | cache-tools | Instant operations (zero API calls) and async cache build tasks |
+| `opsi_` | opsi-tools | Operations Insights analytics with pagination and rate-limit hints |
+| `dbm_` | dbm-tools | Database Management operations with pagination |
+| `admin_` | admin-tools | Profile/config, health, prompts, troubleshooting playbook |
+| *(prompts)* | admin-tools | `admin_list_prompts`, `admin_get_troubleshooting_playbook` |
 
 ### Authentication Flow
 
@@ -186,6 +198,15 @@ Get detailed information about any specific database:
    Allow group YourGroup to read database-management-family in tenancy
    Allow group YourGroup to read compartments in tenancy
    ```
+
+---
+
+## Prompts & Playbooks
+
+- **Prompt templates**: `admin_list_prompts` returns prebuilt instructions for CPU hotspots, storage risk, slow SQL, and fleet overview. Use as canned system prompts for any LLM.
+- **Troubleshooting playbook**: `admin_get_troubleshooting_playbook(issue?)` suggests cache-first tool flows with reasons.
+- **Health checks**: `admin_ping`, `opsi_health`, `dbm_health` are zero-cost readiness probes.
+- **Async tasks**: Kick off cache builds with `cache_start_cache_build_task(compartment_ids=[...])` and poll with `cache_get_task_status(task_id=...)`.
 
 ---
 
@@ -242,9 +263,9 @@ docker run -d \
 ./scripts/setup_and_build.sh --profile PRODUCTION
 ```
 
-### 2. Configure Claude Desktop/Code
+### 2. Configure MCP Client (stdio)
 
-**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+**Claude Desktop** (`~/Library/Application Support/Claude/claude_desktop_config.json`) or ChatGPT MCP:
 
 ```json
 {
@@ -261,7 +282,26 @@ docker run -d \
 }
 ```
 
-### 3. Start Using
+### 3. HTTP Transport (remote)
+
+```bash
+export MCP_TRANSPORT=http
+export MCP_HTTP_PORT=8000
+python -m mcp_oci_opsi
+```
+
+**ChatGPT MCP (HTTP)**
+```json
+{
+  "mcpServers": {
+    "oci-opsi": {
+      "url": "http://127.0.0.1:8000"
+    }
+  }
+}
+```
+
+### 4. Start Using
 
 ```
 # Instant queries (from cache)
@@ -277,6 +317,13 @@ docker run -d \
 # Guided workflows (skills)
 "Use the sql-performance skill to analyze slow queries"
 "Run daily health check"
+
+### 5. Run tests
+
+```bash
+cd mcp_oci_opsi
+python -m pytest
+```
 ```
 
 #### Example: Fleet Summary Response

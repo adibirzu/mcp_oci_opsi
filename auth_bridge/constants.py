@@ -45,14 +45,16 @@ IDCS_BASE_URL = os.getenv(
     f"https://idcs.{_DETECTED_REGION}.oraclecloud.com"  # Fallback, but should be overridden
 )
 
-# Log IDCS configuration for debugging (to stderr to avoid breaking JSON output)
-import sys
+# Log IDCS configuration for debugging using logging instead of print
+# This avoids interfering with MCP JSON stream on stdout
+import logging
+logger = logging.getLogger(__name__)
+
 if not os.getenv("OCA_IDCS_BASE_URL"):
-    print(f"[OCA Auth] ⚠️  WARNING: OCA_IDCS_BASE_URL not set!", file=sys.stderr)
-    print(f"[OCA Auth] Using fallback: {IDCS_BASE_URL}", file=sys.stderr)
-    print(f"[OCA Auth] For Oracle Employee auth, set OCA_IDCS_BASE_URL to your tenant-specific URL", file=sys.stderr)
+    logger.warning("OCA_IDCS_BASE_URL not set! Using fallback region-based URL")
+    logger.debug(f"Fallback IDCS URL: {IDCS_BASE_URL}")
 else:
-    print(f"[OCA Auth] ✅ IDCS Base URL: {IDCS_BASE_URL}", file=sys.stderr)
+    logger.debug(f"Using configured IDCS Base URL from OCA_IDCS_BASE_URL environment variable")
 
 # OAuth endpoints
 IDCS_AUTHORIZE_ENDPOINT = f"{IDCS_BASE_URL}/oauth2/v1/authorize"

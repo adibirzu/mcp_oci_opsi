@@ -1,11 +1,20 @@
 """OCI client factories and utilities."""
 
 from typing import Any, Callable, List, Optional
+import logging
 
 import oci
 import os
 
 from .config import get_oci_config, get_signer_and_region
+
+logger = logging.getLogger(__name__)
+
+# Default client settings with env overrides to bound latency and retries
+DEFAULT_CLIENT_TIMEOUT = int(os.getenv("OCI_CLIENT_TIMEOUT", "30"))
+OPSI_CLIENT_TIMEOUT = int(os.getenv("OPSI_CLIENT_TIMEOUT", str(DEFAULT_CLIENT_TIMEOUT)))
+DBM_CLIENT_TIMEOUT = int(os.getenv("DBM_CLIENT_TIMEOUT", str(DEFAULT_CLIENT_TIMEOUT)))
+CLIENT_RETRY_STRATEGY = oci.retry.DEFAULT_RETRY_STRATEGY
 
 
 def get_ocid_resource_type(ocid: str) -> Optional[str]:
@@ -154,28 +163,19 @@ def get_opsi_client(use_resource_principal: bool = False, region: str = None) ->
     """
     if use_resource_principal:
         signer, default_region = get_signer_and_region(use_resource_principal=True)
-        # When using signer, pass empty config dict
-        client = oci.opsi.OperationsInsightsClient(
-            config={},
-            signer=signer,
-        )
+        client = oci.opsi.OperationsInsightsClient(config={}, signer=signer, retry_strategy=CLIENT_RETRY_STRATEGY)
         client.base_client.set_region(region or default_region)
     else:
-        # User principal - use config directly
         config = get_oci_config()
-
-        # Allow environment override for demo/targeted scans (e.g., emdemo -> uk-london-1)
-        # Only apply if explicit region param wasn't passed
         env_override = os.getenv("MCP_OPSI_REGION_OVERRIDE")
         if env_override and not region:
             region = env_override
-
-        # Override region if specified
         if region:
             config["region"] = region
 
-        client = oci.opsi.OperationsInsightsClient(config)
+        client = oci.opsi.OperationsInsightsClient(config, retry_strategy=CLIENT_RETRY_STRATEGY)
 
+    _apply_timeout(client, OPSI_CLIENT_TIMEOUT)
     return client
 
 
@@ -202,23 +202,29 @@ def get_dbm_client(use_resource_principal: bool = False, region: str = None) -> 
     """
     if use_resource_principal:
         signer, default_region = get_signer_and_region(use_resource_principal=True)
-        # When using signer, pass empty config dict
         client = oci.database_management.DbManagementClient(
             config={},
             signer=signer,
+            retry_strategy=CLIENT_RETRY_STRATEGY,
         )
         client.base_client.set_region(region or default_region)
     else:
-        # User principal - use config directly
         config = get_oci_config()
-
-        # Override region if specified
         if region:
             config["region"] = region
+        client = oci.database_management.DbManagementClient(config, retry_strategy=CLIENT_RETRY_STRATEGY)
 
-        client = oci.database_management.DbManagementClient(config)
-
+    _apply_timeout(client, DBM_CLIENT_TIMEOUT)
     return client
+
+
+def _apply_timeout(client: Any, timeout_seconds: int) -> None:
+    """Apply connect/read timeout to OCI clients without breaking if unsupported."""
+    try:
+        if hasattr(client, "base_client") and hasattr(client.base_client, "session"):
+            client.base_client.session.timeout = timeout_seconds
+    except Exception as exc:  # best-effort
+        logger.debug("Could not apply timeout to OCI client: %s", exc)
 
 
 def list_all(
