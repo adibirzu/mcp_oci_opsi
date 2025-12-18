@@ -171,7 +171,7 @@ def enable_on_db(database_id: str) -> dict[str, Any]:
 
         except (AttributeError, ImportError):
             # Fall back to raw API call if SDK model not available
-            path = f"/20201101/managedDatabases/{database_id}/actions/enableDatabaseManagement"
+            path = f"/20201101/managedDatabases/{database_id}/actions/enableDatabaseManagementFeature"
 
             body = {
                 "feature": "SQLWATCH",
@@ -276,7 +276,7 @@ def disable_on_db(database_id: str) -> dict[str, Any]:
 
         except (AttributeError, ImportError):
             # Fall back to raw API call
-            path = f"/20201101/managedDatabases/{database_id}/actions/disableDatabaseManagement"
+            path = f"/20201101/managedDatabases/{database_id}/actions/disableDatabaseManagementFeature"
 
             body = {
                 "feature": "SQLWATCH",

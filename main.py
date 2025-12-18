@@ -54,6 +54,105 @@ app = FastMCP("oci-opsi")
 logger = logging.getLogger(__name__)
 
 
+# =============================================================================
+# Server Manifest Resource
+# =============================================================================
+
+@app.resource("server://manifest")
+def server_manifest() -> str:
+    """
+    Server manifest resource for capability discovery.
+    
+    Returns server metadata, available skills, and tool categorization.
+    MCP clients can cache this to reduce repeated tool discovery calls.
+    """
+    import json
+    manifest = {
+        "name": "OCI OPSI MCP Server",
+        "version": "3.0.0",
+        "description": "OCI Operations Insights MCP Server with database discovery, performance analysis, and cost optimization",
+        "capabilities": {
+            "skills": [
+                "database-discovery",
+                "performance-analysis",
+                "cost-optimization"
+            ],
+            "tools": {
+                "tier1_cache": [
+                    "ping",
+                    "health",
+                    "get_fleet_summary",
+                    "search_databases",
+                    "get_databases_by_compartment",
+                    "get_cached_statistics",
+                    "list_cached_compartments",
+                    "list_cached_regions",
+                    "get_cached_database",
+                    "list_oci_profiles",
+                    "skill_discover_databases",
+                    "skill_get_fleet_summary",
+                    "skill_search_databases",
+                    "skill_get_database_by_name",
+                    "list_programmatic_skills",
+                    "get_skill_recommendations"
+                ],
+                "tier2_api": [
+                    "list_database_insights",
+                    "get_operations_insights_summary",
+                    "summarize_database_insights",
+                    "skill_analyze_cpu_usage",
+                    "skill_analyze_memory_usage",
+                    "skill_analyze_io_performance",
+                    "skill_get_performance_summary",
+                    "skill_find_cost_opportunities",
+                    "skill_get_savings_summary"
+                ],
+                "tier3_database": [
+                    "query_warehouse_standard",
+                    "list_sql_texts",
+                    "get_sqlwatch_status"
+                ],
+                "tier4_admin": [
+                    "build_database_cache",
+                    "refresh_cache_if_needed",
+                    "refresh_all_caches",
+                    "enable_sqlwatch",
+                    "disable_sqlwatch"
+                ]
+            }
+        },
+        "usage_guide": """
+Start with Tier 1 tools for instant cached data (< 100ms):
+1. Use health() to verify connection
+2. Use get_fleet_summary() for fleet overview
+3. Use search_databases() to find specific databases
+4. Use skill_discover_databases() for filtered discovery
+
+Then use Tier 2 tools for API-based analysis (1-5s):
+1. Use skill_analyze_cpu_usage() for CPU analysis
+2. Use skill_find_cost_opportunities() for cost savings
+3. Use list_database_insights() for OPSI insights
+
+For database-level operations (Tier 3, 5-30s):
+1. Use query_warehouse_standard() for SQL queries
+2. Use list_sql_texts() for SQL analysis
+
+Skills provide high-level workflows:
+- database-discovery: Fast fleet enumeration using cached data
+- performance-analysis: CPU, memory, I/O analysis with recommendations
+- cost-optimization: Rightsizing, scheduling, storage optimization
+""",
+        "environment_variables": [
+            "OCI_CLI_PROFILE",
+            "OCI_CONFIG_FILE",
+            "MCP_TRANSPORT",
+            "MCP_HTTP_HOST",
+            "MCP_HTTP_PORT"
+        ]
+    }
+    return json.dumps(manifest, indent=2)
+
+
 # ============================================================================
 # Pydantic Input Models
 # ============================================================================
