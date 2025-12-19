@@ -18,8 +18,8 @@ oci setup config
 
 # Follow prompts:
 # - Config location: ~/.oci/config (default)
-# - User OCID: ocid1.user.oc1..xxx
-# - Tenancy OCID: ocid1.tenancy.oc1..xxx
+# - User OCID: [Link to Secure Variable: OCI_USER_OCID]
+# - Tenancy OCID: [Link to Secure Variable: OCI_TENANCY_OCID]
 # - Region: us-phoenix-1
 # - Generate API key: Y
 ```
@@ -45,23 +45,23 @@ Edit `~/.oci/config`:
 
 ```ini
 [DEFAULT]
-user=ocid1.user.oc1..xxxxxx
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=aa:bb:cc:dd:ee:ff:11:22:33:44:55:66:77:88:99:00
-tenancy=ocid1.tenancy.oc1..tenant1
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-phoenix-1
 key_file=~/.oci/default_api_key.pem
 
 [production]
-user=ocid1.user.oc1..yyyyyy
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=11:22:33:44:55:66:77:88:99:00:aa:bb:cc:dd:ee:ff
-tenancy=ocid1.tenancy.oc1..tenant2
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-ashburn-1
 key_file=~/.oci/production_api_key.pem
 
 [development]
-user=ocid1.user.oc1..zzzzzz
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=ff:ee:dd:cc:bb:aa:99:88:77:66:55:44:33:22:11:00
-tenancy=ocid1.tenancy.oc1..tenant3
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=eu-frankfurt-1
 key_file=~/.oci/dev_api_key.pem
 ```
@@ -91,10 +91,10 @@ Specifies which compartments to scan when building cache.
 
 ```bash
 # Single compartment
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..xxx"
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
 # Multiple compartments (comma-separated)
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..xxx,ocid1.compartment.oc1..yyy,ocid1.compartment.oc1..zzz"
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 ```
 
 **How to find compartment OCIDs:**
@@ -126,7 +126,7 @@ echo $OCI_CLI_PROFILE
 Set a default compartment for operations.
 
 ```bash
-export OCI_COMPARTMENT_ID="ocid1.compartment.oc1..xxx"
+export OCI_COMPARTMENT_ID="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 ```
 
 ---
@@ -148,11 +148,11 @@ Output:
 
   1. ✅ DEFAULT
      Region: us-phoenix-1
-     Tenancy: ocid1.tenancy.oc1..aaaaaa...
+     Tenancy: [Link to Secure Variable: OCI_TENANCY_OCID]
 
   2. ✅ production
      Region: us-ashburn-1
-     Tenancy: ocid1.tenancy.oc1..bbbbbb...
+     Tenancy: [Link to Secure Variable: OCI_TENANCY_OCID]
 
 Select profile (1-2):
 ```
@@ -241,9 +241,9 @@ cat ~/.oci/new_api_key_public.pem
 
 ```ini
 [new-profile]
-user=ocid1.user.oc1..xxx
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=<fingerprint-from-console>
-tenancy=ocid1.tenancy.oc1..xxx
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-phoenix-1
 key_file=~/.oci/new_api_key.pem
 ```
@@ -282,15 +282,15 @@ for comp in result['compartments']:
 
 ```bash
 # Method 1: Environment variable
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..comp1,ocid1.compartment.oc1..comp2"
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
-# Method 2: .env file
-cat > .env <<EOF
-CACHE_COMPARTMENT_IDS=ocid1.compartment.oc1..comp1,ocid1.compartment.oc1..comp2,ocid1.compartment.oc1..comp3
+# Method 2: .env.local file
+cat > .env.local <<EOF
+CACHE_COMPARTMENT_IDS=[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]
 EOF
 
-# Load .env
-source .env
+# Load .env.local
+source .env.local
 ```
 
 ---
@@ -332,7 +332,7 @@ from mcp_oci_opsi.tools_diagnostics import diagnose_opsi_permissions
 
 # Check permissions for a compartment
 result = diagnose_opsi_permissions(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 print(result['summary']['status'])
@@ -468,7 +468,7 @@ grep fingerprint ~/.oci/config
 
 ```bash
 # Test compartment access
-oci iam compartment get --compartment-id ocid1.compartment.oc1..xxx
+oci iam compartment get --compartment-id [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 
 # If error, check IAM policies
 ```

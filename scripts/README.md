@@ -87,7 +87,7 @@ python3 scripts/tenancy_review.py
 python3 scripts/tenancy_review.py --profile emdemo
 
 # Single compartment only
-python3 scripts/tenancy_review.py --compartment ocid1.compartment.oc1..aaa...
+python3 scripts/tenancy_review.py --compartment [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 
 # List available profiles
 python3 scripts/tenancy_review.py --list-profiles

@@ -252,8 +252,8 @@ mcp_oci_opsi/
        │                                    │  2. Load ~/.oci/config             │
        │                                    │  ┌──────────────────────────────┐  │
        │                                    │  │ [PROFILE]                    │  │
-       │                                    │  │ user=ocid1.user...           │  │
-       │                                    │  │ tenancy=ocid1.tenancy...     │  │
+       │                                    │  │ user=[Link to Secure Variable: OCI_USER_OCID]           │  │
+       │                                    │  │ tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]     │  │
        │                                    │  │ key_file=~/.oci/key.pem      │  │
        │                                    │  │ fingerprint=xx:xx:xx...      │  │
        │                                    │  └──────────────────────────────┘  │
@@ -291,7 +291,7 @@ User Query: "Show CPU forecast for database PRODDB01 for next 30 days"
 │                                                                                            │
 │  1. Parse query → determine tool: opsi_get_database_resource_forecast                     │
 │  2. Resolve parameters:                                                                    │
-│     - database: PRODDB01 → lookup in cache → ocid1.database...                            │
+│     - database: PRODDB01 → lookup in cache → [Link to Secure Variable: OCI_DATABASE_OCID]                            │
 │     - forecast_days: 30                                                                    │
 │     - resource_metric: CPU                                                                 │
 └───────────────────────────────────────────────────────────────────────────────────────────┘
@@ -306,7 +306,7 @@ User Query: "Show CPU forecast for database PRODDB01 for next 30 days"
 │    "params": {                                                                             │
 │      "name": "opsi_get_database_resource_forecast",                                       │
 │      "arguments": {                                                                        │
-│        "database_insight_id": "ocid1.opsidatabaseinsight...",                             │
+│        "database_insight_id": "[Link to Secure Variable: OCI_OPSI_DATABASE_INSIGHT_OCID]",                             │
 │        "resource_metric": "CPU",                                                           │
 │        "forecast_days": 30                                                                 │
 │      }                                                                                     │
@@ -351,7 +351,7 @@ User Query: "Show CPU forecast for database PRODDB01 for next 30 days"
 │      20200630/databaseInsights/{id}/resourceForecastTrend                                 │
 │                                                                                            │
 │  Headers:                                                                                  │
-│    Authorization: Signature version="1",keyId="ocid1.tenancy.../ocid1.user.../fingerprint"│
+│    Authorization: Signature version="1",keyId="[Link to Secure Variable: OCI_TENANCY_OCID]/[Link to Secure Variable: OCI_USER_OCID]/fingerprint"│
 │    Date: Wed, 03 Dec 2025 12:00:00 GMT                                                    │
 │    (request-target): get /20200630/databaseInsights/...                                   │
 └───────────────────────────────────────────────────────────────────────────────────────────┘
@@ -392,23 +392,23 @@ User Query: "Show CPU forecast for database PRODDB01 for next 30 days"
 │    "metadata": {                                                                          │
 │      "created": "2025-12-03T10:00:00Z",                                                  │
 │      "profile": "DEFAULT",                                                                │
-│      "tenancy_ocid": "ocid1.tenancy.oc1..aaa..."                                         │
+│      "tenancy_ocid": "[Link to Secure Variable: OCI_TENANCY_OCID]"                                         │
 │    },                                                                                     │
 │    "databases": {                                                                         │
-│      "ocid1.database.oc1..xxx": {                                                        │
+│      "[Link to Secure Variable: OCI_DATABASE_OCID]": {                                                        │
 │        "name": "PRODDB01",                                                                │
 │        "type": "autonomous",                                                              │
-│        "compartment_id": "ocid1.compartment...",                                         │
+│        "compartment_id": "[Link to Secure Variable: OCI_COMPARTMENT_OCID]",                                         │
 │        "compartment_name": "Production",                                                  │
 │        "region": "us-phoenix-1",                                                          │
 │        "status": "ACTIVE",                                                                │
-│        "database_insight_id": "ocid1.opsidatabaseinsight...",                            │
-│        "managed_database_id": "ocid1.manageddatabase..."                                 │
+│        "database_insight_id": "[Link to Secure Variable: OCI_OPSI_DATABASE_INSIGHT_OCID]",                            │
+│        "managed_database_id": "[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]"                                 │
 │      },                                                                                   │
 │      ...                                                                                  │
 │    },                                                                                     │
 │    "compartments": {                                                                      │
-│      "ocid1.compartment...": {"name": "Production", "path": "root/Production"},          │
+│      "[Link to Secure Variable: OCI_COMPARTMENT_OCID]": {"name": "Production", "path": "root/Production"},          │
 │      ...                                                                                  │
 │    },                                                                                     │
 │    "hosts": {...},                                                                        │

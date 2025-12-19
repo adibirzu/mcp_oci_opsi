@@ -91,7 +91,7 @@ The agent detection system automatically identifies and classifies databases bas
 from mcp_oci_opsi.tools_database_discovery import list_database_insights_by_management_type
 
 result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     profile="production"  # Optional
 )
 
@@ -142,7 +142,7 @@ print(f"Migration candidates: {len(migration_candidates)}")
 from mcp_oci_opsi.tools_database_discovery import get_database_api_compatibility
 
 compatibility = get_database_api_compatibility(
-    database_insight_id="ocid1.databaseinsight.oc1..xxx"
+    database_insight_id="[Link to Secure Variable: OCI_DATABASE_INSIGHT_OCID]"
 )
 
 print(f"Entity Source: {compatibility['entity_source']}")
@@ -184,7 +184,7 @@ for rec in compatibility['recommendations']:
 ```python
 # Get EM-managed databases
 result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 em_databases = result['databases_by_type'].get('EM_MANAGED_EXTERNAL_DATABASE', [])
@@ -216,7 +216,7 @@ if em_databases:
 
 ```python
 result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 print("=" * 80)
@@ -264,7 +264,7 @@ with open('agent_adoption_history.json', 'a') as f:
 ```python
 # Weekly agent adoption check
 result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 adoption = result['summary']['agent_based_percentage']
@@ -280,7 +280,7 @@ if adoption < 80:
 ```python
 # Get production databases first
 prod_result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..production"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 # Focus on EM-managed production databases
@@ -294,7 +294,7 @@ if em_prod:
 ```python
 # After migrating a database
 post_migration = get_database_api_compatibility(
-    database_insight_id="ocid1.databaseinsight.oc1..newly-migrated"
+    database_insight_id="[Link to Secure Variable: OCI_DATABASE_INSIGHT_OCID]"
 )
 
 if post_migration['entity_source'] == 'MACS_MANAGED_EXTERNAL_DATABASE':
@@ -314,7 +314,7 @@ else:
 from mcp_oci_opsi.oci_clients import get_opsi_client
 
 client = get_opsi_client()
-response = client.get_database_insight("ocid1.databaseinsight.oc1..xxx")
+response = client.get_database_insight("[Link to Secure Variable: OCI_DATABASE_INSIGHT_OCID]")
 db_insight = response.data
 
 print(f"Entity Source: {db_insight.entity_source}")
@@ -330,7 +330,7 @@ from mcp_oci_opsi.tools_opsi import query_warehouse_standard
 
 # Use warehouse query instead of summarize_sql_statistics
 result = query_warehouse_standard(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     warehouse_query="SELECT * FROM SQL_STATS WHERE..."
 )
 ```

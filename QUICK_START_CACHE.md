@@ -100,10 +100,10 @@ Claude, check if cache needs refresh
 
 ```
 Claude, rebuild database cache with these compartments:
-- ocid1.compartment.oc1..YOUR_COMPARTMENT_OCID_1
-- ocid1.compartment.oc1..YOUR_COMPARTMENT_OCID_2
-- ocid1.compartment.oc1..YOUR_COMPARTMENT_OCID_3
-- ocid1.compartment.oc1..YOUR_COMPARTMENT_OCID_4
+- [Link to Secure Variable: OCI_COMPARTMENT_OCID]
+- [Link to Secure Variable: OCI_COMPARTMENT_OCID]
+- [Link to Secure Variable: OCI_COMPARTMENT_OCID]
+- [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 ```
 
 Or use the script:

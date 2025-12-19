@@ -370,14 +370,14 @@ TIME_START = TIME_END - timedelta(days=30)  # Change to 30 days
 
 ```python
 # In demo script
-COMPARTMENT_ID = "ocid1.compartment.oc1..your-ocid"
+COMPARTMENT_ID = "[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 ```
 
 ### Add Managed Database
 
 ```python
 # For user/AWR demos
-MANAGED_DATABASE_ID = "ocid1.manageddatabase.oc1..your-ocid"
+MANAGED_DATABASE_ID = "[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]"
 ```
 
 ---
@@ -432,7 +432,7 @@ MCP OCI OPSI SERVER v2.0 - NEW FEATURES DEMO
   💾 Tablespace monitoring
   ⚡ AWR performance metrics
 
-Compartment: ocid1.compartment.oc1..xxx
+Compartment: [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 Time Range: 2025-11-11T00:00:00Z to 2025-11-18T00:00:00Z
 Duration: 7 days
 

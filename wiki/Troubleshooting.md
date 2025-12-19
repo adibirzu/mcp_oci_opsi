@@ -158,9 +158,9 @@ oci setup config
 mkdir -p ~/.oci
 cat > ~/.oci/config <<EOF
 [DEFAULT]
-user=ocid1.user.oc1..xxx
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
-tenancy=ocid1.tenancy.oc1..xxx
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-phoenix-1
 key_file=~/.oci/api_key.pem
 EOF
@@ -188,7 +188,7 @@ Authorization failed or requested resource not found
 oci iam compartment list --all
 
 # Verify OCID exists
-oci iam compartment get --compartment-id ocid1.compartment.oc1..xxx
+oci iam compartment get --compartment-id [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 ```
 
 2. **Check IAM policies:**
@@ -209,7 +209,7 @@ Allow group dbm-users to use database-management in compartment Production
 3. **Verify user group membership:**
 ```bash
 # List groups for user
-oci iam user list-groups --user-id ocid1.user.oc1..xxx
+oci iam user list-groups --user-id [Link to Secure Variable: OCI_USER_OCID]
 ```
 
 ### Diagnose Permissions
@@ -219,7 +219,7 @@ from mcp_oci_opsi.tools_diagnostics import diagnose_opsi_permissions
 
 # Run diagnostics
 result = diagnose_opsi_permissions(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 print(result['summary']['status'])
@@ -256,7 +256,7 @@ SQL statistics API not supported for this database
 from mcp_oci_opsi.tools_database_discovery import get_database_api_compatibility
 
 compat = get_database_api_compatibility(
-    database_insight_id="ocid1.databaseinsight.oc1..xxx"
+    database_insight_id="[Link to Secure Variable: OCI_DATABASE_INSIGHT_OCID]"
 )
 
 print(f"Entity source: {compat['entity_source']}")
@@ -269,7 +269,7 @@ from mcp_oci_opsi.tools_opsi import query_warehouse_standard
 
 # For EM-managed databases, use warehouse
 result = query_warehouse_standard(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     warehouse_query="SELECT * FROM SQL_STATS WHERE ..."
 )
 ```
@@ -334,11 +334,11 @@ subprocess.run(["python3", "build_cache.py", "--select-profile"])
 ```python
 # ✅ FAST (cached)
 from mcp_oci_opsi.tools_cache import get_cached_database
-db = get_cached_database("ocid1.databaseinsight.oc1..xxx")  # <50ms
+db = get_cached_database("[Link to Secure Variable: OCI_DATABASE_INSIGHT_OCID]")  # <50ms
 
 # ❌ SLOW (API call)
 from mcp_oci_opsi.tools_database_discovery import get_database_insight
-db = get_database_insight("ocid1.databaseinsight.oc1..xxx")  # 1-2s
+db = get_database_insight("[Link to Secure Variable: OCI_DATABASE_INSIGHT_OCID]")  # 1-2s
 ```
 
 2. **Batch operations:**
@@ -406,7 +406,7 @@ from mcp_oci_opsi.oci_clients import get_opsi_client
 
 # Manual check
 client = get_opsi_client()
-response = client.get_database_insight("ocid1.databaseinsight.oc1..xxx")
+response = client.get_database_insight("[Link to Secure Variable: OCI_DATABASE_INSIGHT_OCID]")
 
 db_insight = response.data
 print(f"Entity source: {db_insight.entity_source}")
@@ -429,7 +429,7 @@ from mcp_oci_opsi.tools_database_discovery import list_database_insights_by_mana
 
 # Get detailed breakdown
 result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 # Check distribution
@@ -564,7 +564,7 @@ TenancyMismatchError: Resource belongs to different tenancy
 echo $OCI_CLI_PROFILE
 
 # Check compartment tenancy
-oci iam compartment get --compartment-id ocid1.compartment.oc1..xxx | jq -r '.data."compartment-id"'
+oci iam compartment get --compartment-id [Link to Secure Variable: OCI_COMPARTMENT_OCID] | jq -r '.data."compartment-id"'
 
 # Use correct profile
 export OCI_CLI_PROFILE="correct-profile"
@@ -632,7 +632,7 @@ from mcp_oci_opsi.tools_diagnostics import get_comprehensive_diagnostics
 
 # Generate full diagnostic report
 report = get_comprehensive_diagnostics(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 print("=" * 80)

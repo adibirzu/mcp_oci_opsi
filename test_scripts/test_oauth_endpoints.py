@@ -77,7 +77,7 @@ def main():
 
         print("=" * 70)
         print("\n📋 RECOMMENDED ACTION:\n")
-        print(f"Update your .env file with:")
+        print(f"Update your .env.local file with:")
         print(f"   OCA_IDCS_BASE_URL=https://{working_domains[0]}\n")
 
     else:

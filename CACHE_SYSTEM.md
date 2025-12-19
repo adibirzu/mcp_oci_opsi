@@ -134,10 +134,10 @@ python3 build_cache.py
 **Option 2: Via Claude (after MCP server is running)**
 ```
 Claude, build cache for these compartments:
-- ocid1.compartment.oc1..YOUR_COMPARTMENT_OCID_1
-- ocid1.compartment.oc1..YOUR_COMPARTMENT_OCID_2
-- ocid1.compartment.oc1..YOUR_COMPARTMENT_OCID_3
-- ocid1.compartment.oc1..YOUR_COMPARTMENT_OCID_4
+- [Link to Secure Variable: OCI_COMPARTMENT_OCID]
+- [Link to Secure Variable: OCI_COMPARTMENT_OCID]
+- [Link to Secure Variable: OCI_COMPARTMENT_OCID]
+- [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 ```
 
 ### Example Compartments
@@ -145,19 +145,19 @@ Claude, build cache for these compartments:
 Configure the cache for your compartments:
 
 1. **Production**
-   - OCID: `ocid1.compartment.oc1..YOUR_PRODUCTION_COMPARTMENT_OCID`
+   - OCID: `[Link to Secure Variable: OCI_COMPARTMENT_OCID]`
    - Databases: X
 
 2. **Development**
-   - OCID: `ocid1.compartment.oc1..YOUR_DEV_COMPARTMENT_OCID`
+   - OCID: `[Link to Secure Variable: OCI_COMPARTMENT_OCID]`
    - Databases: X
 
 3. **Test**
-   - OCID: `ocid1.compartment.oc1..YOUR_TEST_COMPARTMENT_OCID`
+   - OCID: `[Link to Secure Variable: OCI_COMPARTMENT_OCID]`
    - Databases: X
 
 4. **Staging**
-   - OCID: `ocid1.compartment.oc1..YOUR_STAGING_COMPARTMENT_OCID`
+   - OCID: `[Link to Secure Variable: OCI_COMPARTMENT_OCID]`
    - Databases: X
 
 ## Usage Patterns
@@ -335,8 +335,8 @@ Claude, rebuild cache
 Edit `build_cache.py` and rebuild:
 ```python
 DEMO_COMPARTMENTS = [
-    "your-compartment-ocid-1",
-    "your-compartment-ocid-2",
+    "[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
+    "[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
 ]
 ```
 

@@ -13,7 +13,7 @@ Users had to manually configure environment variables:
 
 ```bash
 # Required manual configuration
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..aaa,ocid1.compartment.oc1..bbb"
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 python3 build_enhanced_cache.py
 ```
 
@@ -63,7 +63,7 @@ python3 build_enhanced_cache.py
 python3 build_enhanced_cache.py --profile emdemo
 
 # Scan specific compartment
-python3 build_enhanced_cache.py --compartment ocid1.compartment.oc1..aaa
+python3 build_enhanced_cache.py --compartment [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 ```
 
 ---
@@ -105,7 +105,7 @@ All sensitive files are already in `.gitignore`:
 
 ```gitignore
 # Environment variables - NEVER COMMIT
-.env
+.env.local
 .env.local
 .env.*.local
 
@@ -350,7 +350,7 @@ Use oci-mcp-opsi to show tenancy information
 
 ```bash
 # Had to manually set this
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..aaa,ocid1.compartment.oc1..bbb"
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 python3 build_enhanced_cache.py
 ```
 
@@ -375,7 +375,7 @@ python3 build_enhanced_cache.py
 
 **A**: Yes! Use `--compartment` argument:
 ```bash
-python3 build_enhanced_cache.py --compartment ocid1.compartment.oc1..aaa
+python3 build_enhanced_cache.py --compartment [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 ```
 
 ### Q: Is my data safe?

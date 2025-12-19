@@ -7,8 +7,13 @@ from typing import Any, List, Tuple
 import oci
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from repo-local .env.local.
+# This allows each MCP server repo to own its OCI/OTEL config independently.
+try:
+    _repo_root = Path(__file__).resolve().parent.parent
+    load_dotenv(_repo_root / ".env.local")
+except Exception:
+    pass
 
 
 def list_available_profiles() -> List[str]:
@@ -21,7 +26,7 @@ def list_available_profiles() -> List[str]:
     Raises:
         FileNotFoundError: If OCI config file doesn't exist
     """
-    config_path = Path.home() / ".oci" / "config"
+    config_path = Path(os.getenv("OCI_CONFIG_FILE", str(Path.home() / ".oci" / "config")))
 
     if not config_path.exists():
         raise FileNotFoundError(f"OCI config file not found at {config_path}")
@@ -67,8 +72,12 @@ def get_oci_config() -> dict[str, Any]:
     profile = os.getenv("OCI_CLI_PROFILE", "DEFAULT")
     region_override = os.getenv("OCI_REGION")
 
-    # Load config from file
-    config = oci.config.from_file(profile_name=profile)
+    # Load config from file (prefer OCI_CONFIG_FILE if set)
+    config_file = os.getenv("OCI_CONFIG_FILE")
+    if config_file:
+        config = oci.config.from_file(file_location=config_file, profile_name=profile)
+    else:
+        config = oci.config.from_file(profile_name=profile)
 
     # Override region if specified in environment
     if region_override:

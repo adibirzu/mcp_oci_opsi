@@ -155,7 +155,7 @@ actual_database_id = db_insight.data.database_id
 
 2. **Extracts region** from database OCID:
 ```python
-# Example: ocid1.autonomousdatabase.oc1.phx.xxx → "us-phoenix-1"
+# Example: [Link to Secure Variable: OCI_AUTONOMOUS_DATABASE_OCID] → "us-phoenix-1"
 region = extract_region_from_ocid(actual_database_id)
 ```
 

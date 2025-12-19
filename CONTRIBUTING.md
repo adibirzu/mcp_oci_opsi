@@ -84,9 +84,9 @@ Follow the [SETUP.md](SETUP.md) guide to configure your OCI credentials and envi
 ### 5. Build Cache (Optional)
 
 ```bash
-# Set up your compartment IDs in .env
-cp .env.example .env
-# Edit .env with your compartments
+# Set up your compartment IDs in .env.local
+cp .env.example .env.local
+# Edit .env.local with your compartments
 
 # Build cache
 python3 build_cache.py
@@ -408,7 +408,7 @@ Dictionary with Exadata insight details including:
   "items": [
     {
       "name": "exadata-system-01",
-      "id": "ocid1.exadatainsight...",
+      "id": "[Link to Secure Variable: OCI_RESOURCE_OCID]",
       "status": "ACTIVE"
     }
   ]

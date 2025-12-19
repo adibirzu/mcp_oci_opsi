@@ -152,7 +152,7 @@ You now have:
 **Never commit**:
 - Cache files (`*_cache.json`)
 - Tenancy reports (`tenancy_review_*.json`)
-- Credentials (`.env`, `*.pem`)
+- Credentials (`.env.local`, `*.pem`)
 - Logs (`*.log`)
 
 📖 **See [SECURITY.md](SECURITY.md) for complete security guidelines**

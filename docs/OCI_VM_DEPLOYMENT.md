@@ -80,12 +80,12 @@ vim terraform.tfvars
 **Minimum required variables:**
 
 ```hcl
-tenancy_ocid     = "ocid1.tenancy.oc1..aaa..."
-user_ocid        = "ocid1.user.oc1..aaa..."
+tenancy_ocid     = "[Link to Secure Variable: OCI_TENANCY_OCID]"
+user_ocid        = "[Link to Secure Variable: OCI_USER_OCID]"
 fingerprint      = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
 private_key_path = "~/.oci/oci_api_key.pem"
 region           = "us-phoenix-1"
-compartment_ocid = "ocid1.compartment.oc1..aaa..."
+compartment_ocid = "[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 ```
 
 ### 3. Deploy
@@ -146,8 +146,8 @@ oci setup config
 # Or manually create ~/.oci/config:
 cat > ~/.oci/config << EOF
 [DEFAULT]
-user=ocid1.user.oc1..your-user-ocid
-tenancy=ocid1.tenancy.oc1..your-tenancy-ocid
+user=[Link to Secure Variable: OCI_USER_OCID]
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-phoenix-1
 fingerprint=xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
 key_file=~/.oci/oci_api_key.pem
@@ -174,8 +174,8 @@ Create your `terraform.tfvars`:
 # =============================================================================
 # OCI Provider Configuration
 # =============================================================================
-tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaa..."
-user_ocid        = "ocid1.user.oc1..aaaaaaaa..."
+tenancy_ocid     = "[Link to Secure Variable: OCI_TENANCY_OCID]"
+user_ocid        = "[Link to Secure Variable: OCI_USER_OCID]"
 fingerprint      = "12:34:56:78:90:ab:cd:ef:12:34:56:78:90:ab:cd:ef"
 private_key_path = "~/.oci/oci_api_key.pem"
 region           = "us-phoenix-1"
@@ -183,7 +183,7 @@ region           = "us-phoenix-1"
 # =============================================================================
 # Compartment
 # =============================================================================
-compartment_ocid = "ocid1.compartment.oc1..aaaaaaaa..."
+compartment_ocid = "[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
 # =============================================================================
 # Network Configuration
@@ -255,7 +255,7 @@ After `terraform apply` completes:
 terraform output
 
 # Expected output:
-# instance_id = "ocid1.instance.oc1..."
+# instance_id = "[Link to Secure Variable: OCI_INSTANCE_OCID]"
 # instance_public_ip = "129.146.xxx.xxx"
 # mcp_server_url = "http://129.146.xxx.xxx:8000"
 # ssh_command = "ssh opc@129.146.xxx.xxx"
@@ -278,8 +278,8 @@ mkdir -p ~/.oci
 # Edit config file
 cat > ~/.oci/config << 'EOF'
 [DEFAULT]
-user=ocid1.user.oc1..your-user-ocid
-tenancy=ocid1.tenancy.oc1..your-tenancy-ocid
+user=[Link to Secure Variable: OCI_USER_OCID]
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-phoenix-1
 fingerprint=xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
 key_file=/home/mcp/.oci/oci_api_key.pem
@@ -343,8 +343,8 @@ use_public_subnet = false  # VM only has private IP
 
 ```hcl
 create_vcn  = false
-vcn_ocid    = "ocid1.vcn.oc1..your-vcn"
-subnet_ocid = "ocid1.subnet.oc1..your-subnet"
+vcn_ocid    = "[Link to Secure Variable: OCI_VCN_OCID]"
+subnet_ocid = "[Link to Secure Variable: OCI_SUBNET_OCID]"
 ```
 
 ### Instance Sizing
@@ -482,7 +482,7 @@ For better security, use instance principal authentication:
 ```hcl
 # In OCI Console: Identity → Dynamic Groups
 Name: MCPServerDynamicGroup
-Rule: ALL {instance.compartment.id = 'ocid1.compartment.oc1..aaa...'}
+Rule: ALL {instance.compartment.id = '[Link to Secure Variable: OCI_COMPARTMENT_OCID]'}
 ```
 
 2. Create Policy:
@@ -627,7 +627,7 @@ sudo journalctl -u mcp-oci-opsi --since "1 hour ago"
 ```bash
 # On server
 sudo tar -czvf /tmp/mcp-backup.tar.gz \
-  /opt/mcp-oci-opsi/.env \
+  /opt/mcp-oci-opsi/.env.local \
   /home/mcp/.oci \
   /home/mcp/.mcp_oci_opsi
 

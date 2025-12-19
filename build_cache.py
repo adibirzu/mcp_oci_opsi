@@ -6,10 +6,10 @@ The cache enables instant responses (<50ms) with zero API calls for inventory qu
 
 Configuration:
     Set the CACHE_COMPARTMENT_IDS environment variable with comma-separated compartment OCIDs:
-    export CACHE_COMPARTMENT_IDS="ocid1.compartment...,ocid1.compartment..."
+    export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
-    Or add to your .env file:
-    CACHE_COMPARTMENT_IDS=ocid1.compartment...,ocid1.compartment...
+    Or add to your .env.local file:
+    CACHE_COMPARTMENT_IDS=[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]
 
 Usage:
     # Use default OCI profile
@@ -22,19 +22,20 @@ Usage:
     $ python3 build_cache.py --select-profile
 
 Example:
-    $ export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..example...,ocid1.compartment.oc1..example..."
+    $ export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
     $ python3 build_cache.py --profile tenancy1
 """
 
 import os
 import sys
 import argparse
+from pathlib import Path
 from dotenv import load_dotenv
 from mcp_oci_opsi.cache import get_cache
 from mcp_oci_opsi.config_enhanced import list_all_profiles, get_profile_info
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from repo-local .env.local file
+load_dotenv(Path(__file__).resolve().parents[1] / ".env.local")
 
 def get_compartment_ids():
     """Get compartment IDs from environment variable.
@@ -52,10 +53,10 @@ def get_compartment_ids():
             "CACHE_COMPARTMENT_IDS environment variable not set.\n"
             "\n"
             "Please set it with your compartment OCIDs:\n"
-            "  export CACHE_COMPARTMENT_IDS=\"ocid1.compartment...,ocid1.compartment...\"\n"
+            "  export CACHE_COMPARTMENT_IDS=\"[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]\"\n"
             "\n"
-            "Or add to your .env file:\n"
-            "  CACHE_COMPARTMENT_IDS=ocid1.compartment...,ocid1.compartment...\n"
+            "Or add to your .env.local file:\n"
+            "  CACHE_COMPARTMENT_IDS=[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]\n"
         )
 
     # Split by comma and strip whitespace

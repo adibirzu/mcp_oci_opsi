@@ -76,7 +76,7 @@ def main():
         print("1. Try authenticating with one of the found domains")
         print("2. Use environment variable to set the correct domain:")
         print(f"   OCA_IDCS_BASE_URL=https://{found_domains[0][0]}")
-        print("\n3. Add to .env file and restart the application")
+        print("\n3. Add to .env.local file and restart the application")
 
     else:
         print("\n❌ NO WORKING IDCS DOMAINS FOUND\n")
@@ -87,7 +87,7 @@ def main():
         print("\nTroubleshooting:")
         print("  - Check your OCA documentation for the correct IDCS endpoint")
         print("  - Ask your OCA administrator for the IDCS domain")
-        print("  - Try setting OCA_IDCS_BASE_URL manually in .env")
+        print("  - Try setting OCA_IDCS_BASE_URL manually in .env.local")
 
     print("\n" + "=" * 70 + "\n")
 

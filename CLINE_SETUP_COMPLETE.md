@@ -276,7 +276,7 @@ For instant responses, build the enhanced cache:
 cd /Users/abirzu/dev/mcp_oci_opsi
 
 # Set compartments to scan
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..aaa..."
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
 # Build cache
 /Users/abirzu/dev/mcp_oci_opsi/.venv/bin/python build_enhanced_cache.py

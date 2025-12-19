@@ -16,7 +16,7 @@ services:
       - MCP_TRANSPORT=http
       - MCP_HTTP_HOST=0.0.0.0
       - MCP_HTTP_PORT=8000
-      - MCP_VERSION=v3
+      - MCP_VERSION=v2
       - MCP_DEBUG=0
 
       # OCI Configuration (mount config file or set these)

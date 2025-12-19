@@ -48,7 +48,7 @@ Get detailed information about any specific database:
 | **MCP Prompts** | 15 guided DBA workflow templates |
 | **Server Composition** | 4 modular sub-servers with tool prefixes |
 | **DBA Skills** | 13 specialized skills for token-efficient workflows |
-| **Disk-Based Storage** | No Redis required - encrypted file storage |
+| **Di[Link to Secure Variable: OPENAI_API_KEY] Storage** | No Redis required - encrypted file storage |
 | **OCI VM Ready** | Terraform scripts for automated deployment |
 | **Async Tasks** | Background cache builds (`cache_start_cache_build_task`) with polling |
 | **Prebuilt Playbooks** | `admin_get_troubleshooting_playbook` and `admin_list_prompts` for fast LLM guidance |
@@ -58,8 +58,9 @@ Get detailed information about any specific database:
 ## Startup & Transports
 
 - **stdio (default)**: `python -m mcp_oci_opsi` (best for Claude Desktop/Code, ChatGPT MCP).
-- **HTTP**: `MCP_TRANSPORT=http MCP_HTTP_PORT=8000 python -m mcp_oci_opsi` (for remote clients).
-- **Version switch**: `MCP_VERSION=v2` (FastMCP 2.x stdio/http), `MCP_VERSION=v3` (enhanced init + cache build).
+- **HTTP**: `MCP_TRANSPORT=http MCP_PORT=8000 python -m mcp_oci_opsi` (for remote clients).
+- **SSE / Streamable HTTP**: `MCP_TRANSPORT=sse|streamable-http MCP_PORT=8000 python -m mcp_oci_opsi` (if supported by your FastMCP runtime).
+- **Version switch**: `MCP_VERSION=v2` (FastMCP server). `MCP_VERSION=v3` runs a local bootstrap/CLI (not an MCP server).
 - **Logging**: Set `LOG_LEVEL=DEBUG` for verbose startup; OCI SDK logs default to WARNING.
 - **Timeouts**: `OCI_CLIENT_TIMEOUT`, `OPSI_CLIENT_TIMEOUT`, `DBM_CLIENT_TIMEOUT` (seconds) bound per-call latency; `MCP_CLIENT_TIMEOUT_MS` caps tool invocations.
 
@@ -454,7 +455,7 @@ See [docs/OCI_VM_DEPLOYMENT.md](./docs/OCI_VM_DEPLOYMENT.md) for:
 | `list_available_skills` | List 13 DBA skills |
 | `get_skill_context` | Get skill instructions |
 | `get_skill_for_query` | Auto-match skill |
-| `get_quick_reference` | Task-to-tool mapping |
+| `get_quick_reference` | Ta[Link to Secure Variable: OPENAI_API_KEY] mapping |
 | `get_token_optimization_tips` | Best practices |
 
 ---
@@ -532,15 +533,22 @@ Reusable workflow templates:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MCP_VERSION` | `v3` | Server version (v2, v3) |
-| `MCP_TRANSPORT` | `stdio` | Transport (stdio, http) |
-| `MCP_HTTP_HOST` | `0.0.0.0` | HTTP bind address |
-| `MCP_HTTP_PORT` | `8000` | HTTP port |
+| `MCP_VERSION` | `v2` | Entry mode (v2 = MCP server, v3 = bootstrap/CLI) |
+| `MCP_TRANSPORT` | `stdio` | Transport (stdio, http, sse, streamable-http) |
+| `MCP_HOST` | `0.0.0.0` | Bind address for network transports |
+| `MCP_PORT` | `8000` | Port for network transports |
+| `MCP_HTTP_HOST` | `0.0.0.0` | Legacy HTTP bind address (fallback) |
+| `MCP_HTTP_PORT` | `8000` | Legacy HTTP port (fallback) |
 | `OCI_CLI_PROFILE` | `DEFAULT` | OCI profile name |
 | `OCI_REGION` | from config | Region override |
 | `FASTMCP_OAUTH_ENABLED` | `0` | Enable OAuth |
 | `JWT_SIGNING_KEY` | - | JWT signing key (OAuth) |
 | `STORAGE_ENCRYPTION_KEY` | - | Token encryption key |
+| `OTEL_TRACING_ENABLED` | `true` | Enable OpenTelemetry tracing |
+| `OCI_APM_ENDPOINT` | - | OCI APM OTLP endpoint ([Link to Secure Variable: OCI_APM_ENDPOINT]) |
+| `OCI_APM_PRIVATE_DATA_KEY` | - | OCI APM private data key ([Link to Secure Variable: OCI_APM_PRIVATE_DATA_KEY]) |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | - | Generic OTLP endpoint (HTTP or gRPC) |
+| `OTEL_DISABLE_LOCAL` | `false` | Disable local collector fallback |
 
 ### OAuth Configuration (Production)
 

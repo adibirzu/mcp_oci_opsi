@@ -24,8 +24,15 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import oci
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load environment variables from repo-local .env.local.
+# This allows each MCP server repo to own its OCI/OTEL config independently.
+try:
+    from pathlib import Path
+
+    _repo_root = Path(__file__).resolve().parent.parent
+    load_dotenv(_repo_root / ".env.local")
+except Exception:
+    pass
 try:
     from mcp_oci_opsi.logging_config import configure_logging
 except ImportError:

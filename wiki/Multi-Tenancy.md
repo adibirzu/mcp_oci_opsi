@@ -47,7 +47,7 @@ All tools accept optional `profile` parameter:
 ```python
 # Use specific profile
 result = list_database_insights(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     profile="production"  # Use production profile
 )
 ```
@@ -62,30 +62,30 @@ Edit `~/.oci/config`:
 
 ```ini
 [DEFAULT]
-user=ocid1.user.oc1..user1
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=aa:bb:cc:dd:ee:ff:11:22:33:44:55:66:77:88:99:00
-tenancy=ocid1.tenancy.oc1..tenantA
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-phoenix-1
 key_file=~/.oci/default_key.pem
 
 [production]
-user=ocid1.user.oc1..user2
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=11:22:33:44:55:66:77:88:99:00:aa:bb:cc:dd:ee:ff
-tenancy=ocid1.tenancy.oc1..tenantB
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-ashburn-1
 key_file=~/.oci/prod_key.pem
 
 [development]
-user=ocid1.user.oc1..user3
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=ff:ee:dd:cc:bb:aa:99:88:77:66:55:44:33:22:11:00
-tenancy=ocid1.tenancy.oc1..tenantC
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=eu-frankfurt-1
 key_file=~/.oci/dev_key.pem
 
 [sandbox]
-user=ocid1.user.oc1..user4
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=99:88:77:66:55:44:33:22:11:00:aa:bb:cc:dd:ee:ff
-tenancy=ocid1.tenancy.oc1..tenantD
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=ap-mumbai-1
 key_file=~/.oci/sandbox_key.pem
 ```
@@ -220,15 +220,15 @@ python3 build_cache.py --select-profile
 
   1. ✅ DEFAULT
      Region: us-phoenix-1
-     Tenancy: CompanyA (ocid1.tenancy.oc1..aaaaaa...)
+     Tenancy: CompanyA ([Link to Secure Variable: OCI_TENANCY_OCID])
 
   2. ✅ production
      Region: us-ashburn-1
-     Tenancy: CompanyB (ocid1.tenancy.oc1..bbbbbb...)
+     Tenancy: CompanyB ([Link to Secure Variable: OCI_TENANCY_OCID])
 
   3. ✅ development
      Region: eu-frankfurt-1
-     Tenancy: CompanyC (ocid1.tenancy.oc1..cccccc...)
+     Tenancy: CompanyC ([Link to Secure Variable: OCI_TENANCY_OCID])
 
   4. ❌ sandbox [INVALID]
      Error: Invalid API key fingerprint
@@ -282,13 +282,13 @@ from mcp_oci_opsi.tools_database_discovery import list_database_insights_by_mana
 
 # Query production tenancy
 prod_result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     profile="production"
 )
 
 # Query development tenancy
 dev_result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..yyy",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     profile="development"
 )
 
@@ -351,9 +351,9 @@ Manage production, staging, and development separately:
 from mcp_oci_opsi.tools_database_discovery import list_database_insights_by_management_type
 
 environments = {
-    'production': 'ocid1.compartment.oc1..prod',
-    'staging': 'ocid1.compartment.oc1..staging',
-    'development': 'ocid1.compartment.oc1..dev'
+    'production': '[Link to Secure Variable: OCI_COMPARTMENT_OCID]',
+    'staging': '[Link to Secure Variable: OCI_COMPARTMENT_OCID]',
+    'development': '[Link to Secure Variable: OCI_COMPARTMENT_OCID]'
 }
 
 for env_name, compartment in environments.items():
@@ -375,15 +375,15 @@ Manage multiple customer tenancies:
 customers = {
     'customer-a': {
         'profile': 'customer_a_profile',
-        'compartment': 'ocid1.compartment.oc1..customerA'
+        'compartment': '[Link to Secure Variable: OCI_COMPARTMENT_OCID]'
     },
     'customer-b': {
         'profile': 'customer_b_profile',
-        'compartment': 'ocid1.compartment.oc1..customerB'
+        'compartment': '[Link to Secure Variable: OCI_COMPARTMENT_OCID]'
     },
     'customer-c': {
         'profile': 'customer_c_profile',
-        'compartment': 'ocid1.compartment.oc1..customerC'
+        'compartment': '[Link to Secure Variable: OCI_COMPARTMENT_OCID]'
     }
 }
 
@@ -409,7 +409,7 @@ regions = {
     'eu-frankfurt-1': 'profile_frankfurt'
 }
 
-compartment_id = "ocid1.compartment.oc1..xxx"
+compartment_id = "[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
 for region, profile in regions.items():
     result = list_database_insights_by_management_type(
@@ -458,7 +458,7 @@ validation = validate_oci_profile("production")
 if validation['valid']:
     # Proceed with operations
     result = list_database_insights(
-        compartment_id="ocid1.compartment.oc1..xxx",
+        compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
         profile="production"
     )
 else:
@@ -578,7 +578,7 @@ manager = MultiTenancyManager(['production', 'development', 'staging'])
 
 results = manager.execute_on_all(
     list_database_insights_by_management_type,
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 for profile, result in results.items():

@@ -55,7 +55,7 @@ The script will:
 OCI OPERATIONS INSIGHTS MCP SERVER - FEATURE DEMO
 ================================================================================
 
-Compartment: ocid1.compartment.oc1..aaaa...
+Compartment: [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 Time Range: 2025-11-11T00:00:00Z to 2025-11-18T00:00:00Z
 Duration: 7 days
 
@@ -94,7 +94,7 @@ PROMPT: What are the most resource-intensive SQL statements in the last week?
 The script uses these default settings:
 
 ```python
-COMPARTMENT_ID = "ocid1.compartment.oc1..aaaa..."  # Your compartment
+COMPARTMENT_ID = "[Link to Secure Variable: OCI_COMPARTMENT_OCID]"  # Your compartment
 TIME_RANGE = 7 days (from now)
 FORECAST_DAYS = 30 days
 ```
@@ -103,7 +103,7 @@ To customize, edit the top of `demo_opsi_features.py`:
 
 ```python
 # Configuration
-COMPARTMENT_ID = "your-compartment-ocid"
+COMPARTMENT_ID = "[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 TIME_END = datetime.now()
 TIME_START = TIME_END - timedelta(days=30)  # Change to 30 days
 ```
@@ -157,7 +157,7 @@ If you get empty results:
 
 1. **Check Operations Insights is enabled**
    ```bash
-   oci opsi database-insights list --compartment-id <your-compartment>
+   oci opsi database-insights list --compartment-id [Link to Secure Variable: OCI_COMPARTMENT_OCID]
    ```
 
 2. **Verify time range has data**

@@ -46,7 +46,7 @@ The programmatic skills provide intelligent, composable analysis capabilities fo
 ```python
 # Discover all databases with filters
 skill_discover_databases(
-    compartment_id="ocid1.compartment...",  # optional
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",  # optional
     region="us-ashburn-1",                   # optional
     db_type="adb",                           # optional: adb, base, exadata
     limit=50                                 # optional
@@ -68,7 +68,7 @@ skill_get_database_by_name(name="PRODDB")
 ```python
 # Analyze CPU usage with trend detection
 skill_analyze_cpu_usage(
-    database_id="ocid1.databaseinsight...",
+    database_id="[Link to Secure Variable: OCI_DATABASE_INSIGHT_OCID]",
     hours_back=24
 )
 # Returns: current_usage, average_usage, peak_usage, trend, recommendations
@@ -120,7 +120,7 @@ summary = skill_get_fleet_summary()
 
 # 2. Find a specific database
 db = skill_get_database_by_name("PRODDB")
-# → {"ocid": "ocid1...", "name": "PRODDB", "db_type": "adb", ...}
+# → {"ocid": "[Link to Secure Variable: OCI_RESOURCE_OCID]", "name": "PRODDB", "db_type": "adb", ...}
 
 # 3. Analyze its performance (Tier 2)
 perf = skill_get_performance_summary(db["ocid"], hours_back=24)
@@ -141,7 +141,7 @@ Markdown skills provide guidance and context for DBA workflows.
 
 Skills are specialized instruction sets that teach Claude how to perform specific DBA tasks. They follow the [Anthropic Skills specification](https://github.com/anthropics/skills) and provide:
 
-- **Focused Guidance**: Task-specific instructions for common DBA workflows
+- **Focused Guidance**: Ta[Link to Secure Variable: OPENAI_API_KEY] instructions for common DBA workflows
 - **Tool Recommendations**: Which MCP tools to use for each scenario
 - **Best Practices**: Optimal approaches and examples
 - **Token Optimization**: Guidance for minimal token consumption

@@ -78,7 +78,7 @@ write_files:
   %{ endif }
 
   # MCP server environment file
-  - path: /opt/mcp-oci-opsi/.env
+  - path: /opt/mcp-oci-opsi/.env.local
     permissions: '0600'
     owner: mcp:mcp
     content: |
@@ -123,7 +123,7 @@ write_files:
       User=mcp
       Group=mcp
       WorkingDirectory=/opt/mcp-oci-opsi
-      EnvironmentFile=/opt/mcp-oci-opsi/.env
+      EnvironmentFile=/opt/mcp-oci-opsi/.env.local
       ExecStart=/opt/mcp-oci-opsi/.venv/bin/python -m mcp_oci_opsi
       Restart=always
       RestartSec=10
@@ -229,8 +229,8 @@ runcmd:
   - |
     JWT_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
     ENCRYPT_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
-    echo "JWT_SIGNING_KEY=$JWT_KEY" >> /opt/mcp-oci-opsi/.env
-    echo "STORAGE_ENCRYPTION_KEY=$ENCRYPT_KEY" >> /opt/mcp-oci-opsi/.env
+    echo "JWT_SIGNING_KEY=$JWT_KEY" >> /opt/mcp-oci-opsi/.env.local
+    echo "STORAGE_ENCRYPTION_KEY=$ENCRYPT_KEY" >> /opt/mcp-oci-opsi/.env.local
   %{ endif }
 
   # Set up OCI config if not provided

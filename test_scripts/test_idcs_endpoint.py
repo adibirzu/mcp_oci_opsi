@@ -132,7 +132,7 @@ def main():
     print(f"      → Or check logs when OCA redirects you")
     print(f"")
     print(f"   4. Set OCA_IDCS_BASE_URL if different from detected region:")
-    print(f"      → Add to .env: OCA_IDCS_BASE_URL=https://idcs.<correct-region>.oraclecloud.com")
+    print(f"      → Add to .env.local: OCA_IDCS_BASE_URL=https://idcs.<correct-region>.oraclecloud.com")
 
     print("\n" + "=" * 70 + "\n")
 

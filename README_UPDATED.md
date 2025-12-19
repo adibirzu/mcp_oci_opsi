@@ -122,7 +122,7 @@ pip install -e .
 
 ```bash
 # Set compartment ID for caching
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..aaa..."
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
 # Build initial cache for fast queries
 python3 build_cache.py --select-profile  # Interactive profile selection
@@ -134,7 +134,7 @@ python3 build_cache.py --select-profile  # Interactive profile selection
 from mcp_oci_opsi.tools_opsi_extended import summarize_sql_statistics
 
 result = summarize_sql_statistics(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     time_interval_start="2025-11-17T00:00:00Z",
     time_interval_end="2025-11-18T00:00:00Z"
 )
@@ -252,7 +252,7 @@ pip install -e .
 
 ```bash
 # Set compartment IDs
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..aaa,ocid1.compartment.oc1..bbb"
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
 # Build cache with profile selection
 python3 build_cache.py --select-profile
@@ -269,10 +269,10 @@ python3 build_cache.py --profile production
 
 ```bash
 # Required for cache building
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..xxx,..."
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],..."
 
 # Optional: Default compartment
-export OCI_COMPARTMENT_ID="ocid1.compartment.oc1..xxx"
+export OCI_COMPARTMENT_ID="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
 # Optional: Default profile (if not using interactive selection)
 export OCI_CLI_PROFILE="DEFAULT"
@@ -287,23 +287,23 @@ Create multiple profiles in `~/.oci/config`:
 
 ```ini
 [DEFAULT]
-user=ocid1.user.oc1..xxx
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
-tenancy=ocid1.tenancy.oc1..xxx
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-phoenix-1
 key_file=~/.oci/oci_api_key.pem
 
 [production]
-user=ocid1.user.oc1..yyy
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=yy:yy:yy:yy:yy:yy:yy:yy:yy:yy:yy:yy:yy:yy:yy:yy
-tenancy=ocid1.tenancy.oc1..yyy
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-ashburn-1
 key_file=~/.oci/oci_api_key_prod.pem
 
 [development]
-user=ocid1.user.oc1..zzz
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=zz:zz:zz:zz:zz:zz:zz:zz:zz:zz:zz:zz:zz:zz:zz:zz
-tenancy=ocid1.tenancy.oc1..zzz
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=eu-frankfurt-1
 key_file=~/.oci/oci_api_key_dev.pem
 ```
@@ -319,7 +319,7 @@ from mcp_oci_opsi.tools_database_discovery import list_database_insights_by_mana
 
 # Discover databases by agent type
 result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     profile="production"
 )
 
@@ -342,7 +342,7 @@ from mcp_oci_opsi.tools_opsi_resource_stats import (
 
 # Get resource statistics
 stats = summarize_database_insight_resource_statistics(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     resource_metric="CPU",
     profile="production"
 )
@@ -354,7 +354,7 @@ for db in stats['items']:
 
 # Get time-series usage data
 usage = summarize_database_insight_resource_usage(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     resource_metric="STORAGE",
     analysis_time_interval="DAILY"
 )
@@ -373,7 +373,7 @@ from mcp_oci_opsi.tools_dbmanagement_users import (
 
 # List all database users
 users = list_users(
-    managed_database_id="ocid1.manageddatabase.oc1..xxx"
+    managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]"
 )
 
 for user in users['items']:
@@ -381,13 +381,13 @@ for user in users['items']:
 
 # Get detailed user information
 user_detail = get_user(
-    managed_database_id="ocid1.manageddatabase.oc1..xxx",
+    managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]",
     user_name="ADMIN"
 )
 
 # List user privileges
 privs = list_system_privileges(
-    managed_database_id="ocid1.manageddatabase.oc1..xxx",
+    managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]",
     user_name="ADMIN"
 )
 
@@ -407,7 +407,7 @@ from mcp_oci_opsi.tools_opsi_resource_stats import (
 
 # List all tablespaces
 tablespaces = list_tablespaces(
-    managed_database_id="ocid1.manageddatabase.oc1..xxx",
+    managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]",
     tablespace_type="PERMANENT"
 )
 
@@ -416,7 +416,7 @@ for ts in tablespaces['items']:
 
 # Get tablespace growth trend
 trend = summarize_database_insight_tablespace_usage_trend(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 for ts in trend['tablespaces']:
@@ -441,7 +441,7 @@ start_time = end_time - timedelta(days=1)
 
 # Analyze CPU usage
 cpu_usage = summarize_awr_db_cpu_usages(
-    managed_database_id="ocid1.manageddatabase.oc1..xxx",
+    managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]",
     time_greater_than_or_equal_to=start_time.isoformat() + "Z",
     time_less_than_or_equal_to=end_time.isoformat() + "Z"
 )
@@ -451,7 +451,7 @@ for usage in cpu_usage['items']:
 
 # Analyze wait events
 wait_events = summarize_awr_db_wait_event_buckets(
-    managed_database_id="ocid1.manageddatabase.oc1..xxx",
+    managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]",
     time_greater_than_or_equal_to=start_time.isoformat() + "Z",
     time_less_than_or_equal_to=end_time.isoformat() + "Z"
 )
@@ -468,7 +468,7 @@ for event in top_events:
 
 # Check parameter changes
 param_changes = summarize_awr_db_parameter_changes(
-    managed_database_id="ocid1.manageddatabase.oc1..xxx",
+    managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]",
     time_greater_than_or_equal_to=start_time.isoformat() + "Z",
     time_less_than_or_equal_to=end_time.isoformat() + "Z"
 )
@@ -506,13 +506,13 @@ from mcp_oci_opsi.tools_opsi_extended import summarize_sql_statistics
 
 # Production environment
 prod_sql = summarize_sql_statistics(
-    compartment_id="ocid1.compartment.oc1.phx..prod",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     profile="production"
 )
 
 # Development environment
 dev_sql = summarize_sql_statistics(
-    compartment_id="ocid1.compartment.oc1.iad..dev",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     profile="development"
 )
 ```

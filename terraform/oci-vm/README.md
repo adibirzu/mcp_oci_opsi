@@ -50,12 +50,12 @@ See `terraform.tfvars.example` for all available options.
 ### Minimum Required Variables
 
 ```hcl
-tenancy_ocid     = "ocid1.tenancy.oc1..aaa..."
-user_ocid        = "ocid1.user.oc1..aaa..."
+tenancy_ocid     = "[Link to Secure Variable: OCI_TENANCY_OCID]"
+user_ocid        = "[Link to Secure Variable: OCI_USER_OCID]"
 fingerprint      = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
 private_key_path = "~/.oci/oci_api_key.pem"
 region           = "us-phoenix-1"
-compartment_ocid = "ocid1.compartment.oc1..aaa..."
+compartment_ocid = "[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 ```
 
 ## Outputs
@@ -63,7 +63,7 @@ compartment_ocid = "ocid1.compartment.oc1..aaa..."
 After `terraform apply`:
 
 ```
-instance_id          = "ocid1.instance.oc1..."
+instance_id          = "[Link to Secure Variable: OCI_INSTANCE_OCID]"
 instance_public_ip   = "129.146.xxx.xxx"
 mcp_server_url       = "http://129.146.xxx.xxx:8000"
 ssh_command          = "ssh opc@129.146.xxx.xxx"

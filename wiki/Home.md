@@ -133,7 +133,7 @@
 from mcp_oci_opsi.tools_database_discovery import list_database_insights_by_management_type
 
 result = list_database_insights_by_management_type(
-    compartment_id="ocid1.compartment.oc1..xxx"
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 )
 
 print(f"Agent adoption: {result['summary']['agent_based_percentage']}%")
@@ -144,7 +144,7 @@ print(f"Agent adoption: {result['summary']['agent_based_percentage']}%")
 from mcp_oci_opsi.tools_opsi_resource_stats import summarize_database_insight_resource_statistics
 
 stats = summarize_database_insight_resource_statistics(
-    compartment_id="ocid1.compartment.oc1..xxx",
+    compartment_id="[Link to Secure Variable: OCI_COMPARTMENT_OCID]",
     resource_metric="CPU"
 )
 
@@ -156,7 +156,7 @@ for db in stats['items']:
 ```python
 from mcp_oci_opsi.tools_dbmanagement_users import list_users
 
-users = list_users(managed_database_id="ocid1.manageddatabase.oc1..xxx")
+users = list_users(managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]")
 print(f"Total users: {users['count']}")
 ```
 
@@ -165,7 +165,7 @@ print(f"Total users: {users['count']}")
 from mcp_oci_opsi.tools_dbmanagement_awr_metrics import summarize_awr_db_wait_event_buckets
 
 events = summarize_awr_db_wait_event_buckets(
-    managed_database_id="ocid1.manageddatabase.oc1..xxx",
+    managed_database_id="[Link to Secure Variable: OCI_MANAGED_DATABASE_OCID]",
     time_greater_than_or_equal_to="2025-11-17T00:00:00Z",
     time_less_than_or_equal_to="2025-11-18T00:00:00Z"
 )

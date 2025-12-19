@@ -9,8 +9,9 @@ import configparser
 import oci
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables from repo-local .env.local file
+_repo_root = Path(__file__).resolve().parents[1]
+load_dotenv(_repo_root / ".env.local")
 
 
 @lru_cache(maxsize=32)

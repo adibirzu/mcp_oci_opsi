@@ -588,8 +588,9 @@ async def get_server_config(ctx: Context = None) -> Dict[str, Any]:
 
     return {
         "transport": os.getenv("MCP_TRANSPORT", "stdio"),
-        "http_host": os.getenv("MCP_HTTP_HOST", "0.0.0.0"),
-        "http_port": int(os.getenv("MCP_HTTP_PORT", "8000")),
+        "host": os.getenv("MCP_HOST", os.getenv("MCP_HTTP_HOST", "0.0.0.0")),
+        "port": int(os.getenv("MCP_PORT", os.getenv("MCP_HTTP_PORT", "8000"))),
+        "supported_transports": ["stdio", "http", "sse", "streamable-http"],
         "auth_mode": detect_auth_mode().value,
         "oauth_enabled": os.getenv("FASTMCP_OAUTH_ENABLED") == "1",
         "debug_mode": os.getenv("MCP_DEBUG", "0") == "1",

@@ -57,9 +57,9 @@ vi ~/.oci/config
 ### 2. OCI Configuration Example
 ```ini
 [DEFAULT]
-user=ocid1.user.oc1..aaaa...
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=aa:bb:cc:...
-tenancy=ocid1.tenancy.oc1..aaaa...
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-ashburn-1
 key_file=~/.oci/oci_api_key.pem
 ```
@@ -112,7 +112,7 @@ All tools use standard OCI SDK authentication - no OCA authentication required.
 - Environment-based configuration
 
 ❌ **Do NOT include:**
-- Your `.env` file (contains IDCS URLs if OCA is configured elsewhere)
+- Your `.env.local` file (contains IDCS URLs if OCA is configured elsewhere)
 - Your `~/.oci/config` file
 - Cache files with tenant-specific data
 

@@ -146,8 +146,15 @@ Skills provide high-level workflows:
             "OCI_CLI_PROFILE",
             "OCI_CONFIG_FILE",
             "MCP_TRANSPORT",
+            "MCP_HOST",
+            "MCP_PORT",
             "MCP_HTTP_HOST",
-            "MCP_HTTP_PORT"
+            "MCP_HTTP_PORT",
+            "OTEL_TRACING_ENABLED",
+            "OCI_APM_ENDPOINT",
+            "OCI_APM_PRIVATE_DATA_KEY",
+            "OTEL_EXPORTER_OTLP_ENDPOINT",
+            "OTEL_DISABLE_LOCAL",
         ]
     }
     return json.dumps(manifest, indent=2)
@@ -1098,11 +1105,19 @@ def get_skill_recommendations(query: str) -> dict:
 def health(detail: bool = False) -> dict:
     """Health/status check for the OCI OPSI MCP server (no side effects)."""
     try:
+        try:
+            from .observability import get_otel_status
+
+            otel_status = get_otel_status()
+        except Exception:
+            otel_status = {"enabled": False, "status": "unavailable"}
+
         info = {
             "status": "ok",
             "server": "oci-opsi",
             "transport": os.getenv("MCP_TRANSPORT", os.getenv("FASTMCP_TRANSPORT", "stdio")).lower(),
             "profile": os.getenv("OCI_CLI_PROFILE", "DEFAULT"),
+            "telemetry": otel_status,
         }
         if detail:
             import platform
@@ -1121,8 +1136,23 @@ def health(detail: bool = False) -> dict:
 def main():
     """Run the MCP server with transport selection based on environment variables."""
     transport = os.getenv("MCP_TRANSPORT", os.getenv("FASTMCP_TRANSPORT", "stdio")).lower()
-    http_host = os.getenv("MCP_HTTP_HOST", "0.0.0.0")
-    http_port = int(os.getenv("MCP_HTTP_PORT", "8000"))
+    host = os.getenv("MCP_HOST", os.getenv("MCP_HTTP_HOST", "0.0.0.0"))
+    try:
+        port = int(os.getenv("MCP_PORT", os.getenv("MCP_HTTP_PORT", os.getenv("FASTMCP_PORT", "8000"))))
+    except Exception:
+        port = 8000
+
+    # ---- Observability (optional) ----
+    try:
+        from .observability import init_tracing, instrument_requests, instrument_fastapi
+
+        os.environ.setdefault("OTEL_SERVICE_NAME", "oci-mcp-opsi")
+        init_tracing(os.getenv("OTEL_SERVICE_NAME", "oci-mcp-opsi"))
+        instrument_requests()
+        instrument_fastapi(app)
+    except Exception:
+        # Never block server startup due to observability config/imports
+        pass
 
     logger.info(
         "Starting MCP oci-opsi server",
@@ -1130,24 +1160,26 @@ def main():
             "transport": transport,
             "profile": os.getenv("OCI_CLI_PROFILE"),
             "version": "v2",
-            "http_host": http_host,
-            "http_port": http_port,
+            "host": host,
+            "port": port,
         },
     )
 
-    if transport == "http":
-        logger.info("Starting MCP server in HTTP mode")
-        try:
-            app.run(transport="http", host=http_host, port=http_port)
-            return
-        except (ValueError, NotImplementedError):
-            logger.warning("HTTP transport not available, falling back to stdio")
+    valid_transports = {"stdio", "http", "sse", "streamable-http"}
+    if transport not in valid_transports:
+        logger.warning("Unknown transport '%s'; falling back to stdio", transport)
+        transport = "stdio"
 
-    # Default: stdio transport for local usage
     try:
+        if transport == "stdio":
+            app.run(transport="stdio")
+        else:
+            app.run(transport=transport, host=host, port=port)
+    except (ValueError, NotImplementedError) as exc:
+        logger.warning("Transport '%s' not available (%s); falling back to stdio", transport, exc)
         app.run(transport="stdio")
     except Exception as exc:
-        logger.exception("Failed to start MCP server (stdio)", exc_info=exc)
+        logger.exception("Failed to start MCP server", exc_info=exc)
         raise
 
 

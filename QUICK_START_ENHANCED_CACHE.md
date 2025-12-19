@@ -49,7 +49,7 @@ python3 build_enhanced_cache.py
 python3 build_enhanced_cache.py --profile production
 
 # Scan specific compartment only
-python3 build_enhanced_cache.py --compartment ocid1.compartment.oc1..aaa...
+python3 build_enhanced_cache.py --compartment [Link to Secure Variable: OCI_COMPARTMENT_OCID]
 ```
 
 ---
@@ -117,7 +117,7 @@ With a typical tenancy (50 compartments, 100 databases):
 
 ### What's Protected (Never Committed to Git)
 
-✅ **.env** files - All environment variables
+✅ **.env.local** files - All environment variables
 ✅ **.env.local** - Local overrides
 ✅ **Cache files** - Contains tenant data (*.cache.json, *_cache.json)
 ✅ **OCI config** - ~/.oci/config
@@ -319,7 +319,7 @@ Error discovering compartments: NotAuthorized
 **Before**:
 ```bash
 # Manual configuration required
-export CACHE_COMPARTMENT_IDS="ocid1.compartment..."
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 python3 build_enhanced_cache.py
 ```
 

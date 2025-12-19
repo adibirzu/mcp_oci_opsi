@@ -67,9 +67,9 @@ Create `~/.oci/config`:
 
 ```ini
 [DEFAULT]
-user=ocid1.user.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+user=[Link to Secure Variable: OCI_USER_OCID]
 fingerprint=xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx
-tenancy=ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+tenancy=[Link to Secure Variable: OCI_TENANCY_OCID]
 region=us-phoenix-1
 key_file=~/.oci/oci_api_key.pem
 ```
@@ -122,18 +122,18 @@ python3 -c "import mcp_oci_opsi; print('Success!')"
 
 ```bash
 # Add to ~/.bashrc or ~/.zshrc
-export CACHE_COMPARTMENT_IDS="ocid1.compartment.oc1..xxx,ocid1.compartment.oc1..yyy"
+export CACHE_COMPARTMENT_IDS="[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 
-# Or create .env file
-cat > .env <<EOF
-CACHE_COMPARTMENT_IDS=ocid1.compartment.oc1..xxx,ocid1.compartment.oc1..yyy
+# Or create .env.local file
+cat > .env.local <<EOF
+CACHE_COMPARTMENT_IDS=[Link to Secure Variable: OCI_COMPARTMENT_OCID],[Link to Secure Variable: OCI_COMPARTMENT_OCID]
 EOF
 ```
 
 ### Optional: Set Default Compartment
 
 ```bash
-export OCI_COMPARTMENT_ID="ocid1.compartment.oc1..xxx"
+export OCI_COMPARTMENT_ID="[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
 ```
 
 ---
@@ -171,11 +171,11 @@ python3 build_cache.py
 
   1. ✅ DEFAULT
      Region: us-phoenix-1
-     Tenancy: ocid1.tenancy.oc1..aaaaaa...
+     Tenancy: [Link to Secure Variable: OCI_TENANCY_OCID]
 
   2. ✅ production
      Region: us-ashburn-1
-     Tenancy: ocid1.tenancy.oc1..bbbbbb...
+     Tenancy: [Link to Secure Variable: OCI_TENANCY_OCID]
 
 Select profile (1-2): 1
 
@@ -254,7 +254,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
       "args": ["-m", "mcp_oci_opsi"],
       "env": {
         "OCI_CLI_PROFILE": "DEFAULT",
-        "CACHE_COMPARTMENT_IDS": "ocid1.compartment.oc1..xxx"
+        "CACHE_COMPARTMENT_IDS": "[Link to Secure Variable: OCI_COMPARTMENT_OCID]"
       }
     }
   }

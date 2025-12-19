@@ -12,7 +12,8 @@ Contributor notes for the MCP OCI OPSI server. Keep changes small, documented, a
 ## Build, Test, and Development Commands
 - Env + install: `python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev,database]"` (or `uv pip install -e ".[dev,database]"`).
 - Cache + setup: `./scripts/setup_and_build.sh [--profile PROFILE]`; fast refresh: `./scripts/quick_cache_build.sh`.
-- Run server: `MCP_VERSION=v3 python -m mcp_oci_opsi` (stdio). HTTP: `MCP_TRANSPORT=http MCP_HTTP_PORT=8000 python -m mcp_oci_opsi` or `docker-compose up --build`.
+- Run server: `python -m mcp_oci_opsi` (default `MCP_VERSION=v2`, stdio). Network transports: `MCP_TRANSPORT=http|sse|streamable-http MCP_PORT=8000 python -m mcp_oci_opsi`.
+- Note: `MCP_VERSION=v3` runs a local bootstrap/CLI helper and does not start an MCP server.
 - Tests: `pytest`; `pytest --cov=mcp_oci_opsi`; scope with `pytest -k "<keyword>"`.
 - Format/lint: `ruff check mcp_oci_opsi` and `black mcp_oci_opsi` (line length 100).
 
