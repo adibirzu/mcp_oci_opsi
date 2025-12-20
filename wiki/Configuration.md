@@ -176,11 +176,11 @@ python3 build_cache.py
 
 ### Cache Location
 
-Default: `~/.mcp_oci_opsi_cache.json`
+Default: `~/.mcp-oci/cache/opsi_cache.json`
 
 ```bash
 # View cache file
-cat ~/.mcp_oci_opsi_cache.json | jq '.statistics'
+cat ~/.mcp-oci/cache/opsi_cache.json | jq '.statistics'
 
 # Output:
 {

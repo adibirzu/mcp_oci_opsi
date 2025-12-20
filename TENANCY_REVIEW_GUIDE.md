@@ -89,7 +89,7 @@ python3 scripts/tenancy_review.py --list-profiles
 - Suggests best practices for MCP usage
 
 ### Step 7: Build Optimized Cache
-- Creates local cache file at `~/.mcp_oci_opsi_cache.json`
+- Creates local cache file at `~/.mcp-oci/cache/opsi_cache.json`
 - Optimizes data structure for fast lookups
 - Calculates statistics and aggregations
 
@@ -107,8 +107,8 @@ All sensitive files are automatically protected:
 - ✅ User-specific and isolated
 
 **Files protected**:
-- `~/.mcp_oci_opsi_cache.json` - Main cache file
-- `~/.mcp_oci_opsi/tenancy_review_*.json` - Review reports
+- `~/.mcp-oci/cache/opsi_cache.json` - Main cache file
+- `~/.mcp-oci/cache/tenancy_review_*.json` - Review reports
 
 📖 **See [SECURITY.md](SECURITY.md) for comprehensive security guidelines**
 
@@ -167,7 +167,7 @@ Building optimized cache...
   ✓ Cache built successfully
   ✓ Cached 177 databases
   ✓ Cached 31 hosts
-  ✓ Cache location: /Users/yourname/.mcp_oci_opsi_cache.json
+  ✓ Cache location: /Users/yourname/.mcp-oci/cache/opsi_cache.json
 
 ================================================================================
 TENANCY REVIEW SUMMARY
@@ -201,17 +201,17 @@ NEXT STEPS:
 3. Try: 'Find database X'
 4. Try: 'Show me databases in compartment X'
 
-Report saved to: /Users/yourname/.mcp_oci_opsi/tenancy_review_20251113_101530.json
+Report saved to: /Users/yourname/.mcp-oci/cache/tenancy_review_20251113_101530.json
 ```
 
 ### Generated Files
 
-1. **Cache File**: `~/.mcp_oci_opsi_cache.json`
+1. **Cache File**: `~/.mcp-oci/cache/opsi_cache.json`
    - Optimized for fast lookups
    - Contains all database, host, and compartment data
    - Valid for 24 hours (auto-refresh available)
 
-2. **Review Report**: `~/.mcp_oci_opsi/tenancy_review_TIMESTAMP.json`
+2. **Review Report**: `~/.mcp-oci/cache/tenancy_review_TIMESTAMP.json`
    - Comprehensive JSON report
    - Includes all inventory data
    - Contains recommendations
@@ -293,13 +293,13 @@ Now you can ask these questions with **instant responses** and **minimal tokens*
 
 ```bash
 # View cache file
-cat ~/.mcp_oci_opsi_cache.json | jq '.statistics'
+cat ~/.mcp-oci/cache/opsi_cache.json | jq '.statistics'
 
 # Check cache age
-ls -lh ~/.mcp_oci_opsi_cache.json
+ls -lh ~/.mcp-oci/cache/opsi_cache.json
 
 # View review reports
-ls -lh ~/.mcp_oci_opsi/tenancy_review_*.json
+ls -lh ~/.mcp-oci/cache/tenancy_review_*.json
 ```
 
 ## Answering DBA Demo Questions Efficiently
@@ -460,11 +460,11 @@ python3 scripts/tenancy_review.py --profile test
 
 ```bash
 # View latest review report
-ls -t ~/.mcp_oci_opsi/tenancy_review_*.json | head -1 | xargs cat | jq
+ls -t ~/.mcp-oci/cache/tenancy_review_*.json | head -1 | xargs cat | jq
 
 # Extract specific data
-cat ~/.mcp_oci_opsi/tenancy_review_*.json | jq '.statistics'
-cat ~/.mcp_oci_opsi/tenancy_review_*.json | jq '.recommendations'
+cat ~/.mcp-oci/cache/tenancy_review_*.json | jq '.statistics'
+cat ~/.mcp-oci/cache/tenancy_review_*.json | jq '.recommendations'
 ```
 
 ## Summary

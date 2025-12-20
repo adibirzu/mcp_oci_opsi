@@ -130,7 +130,7 @@ See `.gitignore` for complete list.
 
 The script:
 - ✅ Uses local OCI credentials from `~/.oci/config`
-- ✅ Stores cache in home directory (`~/.mcp_oci_opsi_cache_enhanced.json`)
+- ✅ Stores cache in home directory (`~/.mcp-oci/cache/opsi_cache_enhanced_<profile>.json`)
 - ✅ Never commits sensitive data to git
 - ✅ Respects OCI IAM policies (read-only)
 
@@ -138,7 +138,7 @@ The script:
 
 ## 📁 Cache Location
 
-**Cache File**: `~/.mcp_oci_opsi_cache_enhanced.json`
+**Cache File**: `~/.mcp-oci/cache/opsi_cache_enhanced_<profile>.json`
 
 **Why in home directory?**
 - ✅ Not committed to git
@@ -245,7 +245,7 @@ NEXT STEPS
 ================================================================================
 
 1. The cache is ready to use with MCP tools
-2. Cache file: ~/.mcp_oci_opsi_cache_enhanced.json
+2. Cache file: ~/.mcp-oci/cache/opsi_cache_enhanced_<profile>.json
 3. Use get_fleet_summary(), search_databases(), etc. for instant responses
 4. Refresh cache periodically (recommended: weekly)
 

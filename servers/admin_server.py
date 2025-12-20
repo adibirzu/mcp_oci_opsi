@@ -594,8 +594,11 @@ async def get_server_config(ctx: Context = None) -> Dict[str, Any]:
         "auth_mode": detect_auth_mode().value,
         "oauth_enabled": os.getenv("FASTMCP_OAUTH_ENABLED") == "1",
         "debug_mode": os.getenv("MCP_DEBUG", "0") == "1",
-        "cache_path": os.path.expanduser("~/.mcp_oci_opsi_cache.json"),
-        "oauth_storage_path": os.path.expanduser("~/.mcp_oci_opsi/oauth"),
+        "cache_path": os.path.join(
+            os.path.expanduser(os.getenv("MCP_CACHE_DIR") or os.getenv("OCI_MCP_CACHE_DIR") or "~/.mcp-oci/cache"),
+            "opsi_cache.json",
+        ),
+        "oauth_storage_path": os.path.expanduser("~/.mcp-oci/cache/oauth"),
     }
 
 

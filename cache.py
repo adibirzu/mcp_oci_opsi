@@ -12,6 +12,30 @@ from .config import get_oci_config
 from .oci_clients import get_opsi_client, list_all
 
 
+def _get_shared_cache_dir() -> Path:
+    raw = os.getenv("MCP_CACHE_DIR") or os.getenv("OCI_MCP_CACHE_DIR")
+    if raw:
+        return Path(os.path.expanduser(raw))
+    return Path.home() / ".mcp-oci" / "cache"
+
+
+def _maybe_write_redis(cache_key: str, payload: Dict[str, Any]) -> None:
+    backend = os.getenv("MCP_CACHE_BACKEND", "file").lower()
+    redis_url = os.getenv("MCP_REDIS_URL") or os.getenv("REDIS_URL")
+    if backend != "redis" or not redis_url:
+        return
+    try:
+        import redis  # type: ignore
+    except Exception:
+        return
+    try:
+        prefix = os.getenv("MCP_CACHE_KEY_PREFIX", "mcp:cache")
+        client = redis.Redis.from_url(redis_url)
+        client.set(f"{prefix}:{cache_key}", json.dumps(payload, default=str))
+    except Exception:
+        return
+
+
 class DatabaseCache:
     """Fast local cache for database inventory across compartments."""
 
@@ -20,12 +44,14 @@ class DatabaseCache:
         Initialize cache with custom or default location.
 
         Args:
-            cache_file: Optional path to cache file. Defaults to ~/.mcp_oci_opsi_cache.json
+            cache_file: Optional path to cache file. Defaults to $MCP_CACHE_DIR/opsi_cache.json
         """
         if cache_file:
             self.cache_file = Path(cache_file)
         else:
-            self.cache_file = Path.home() / ".mcp_oci_opsi_cache.json"
+            self.cache_file = _get_shared_cache_dir() / "opsi_cache.json"
+
+        self.cache_file.parent.mkdir(parents=True, exist_ok=True)
 
         self.cache_data: Dict[str, Any] = {
             "metadata": {
@@ -71,6 +97,7 @@ class DatabaseCache:
         try:
             with open(self.cache_file, "w") as f:
                 json.dump(self.cache_data, f, indent=2)
+            _maybe_write_redis("opsi_cache", self.cache_data)
             return True
         except Exception:
             return False
@@ -554,6 +581,6 @@ def get_cache(profile: Optional[str] = None) -> DatabaseCache:
     """
     key = _cache_key(profile)
     if key not in _cache_map:
-        cache_file = Path.home() / f".mcp_oci_opsi_cache_{key}.json"
+        cache_file = _get_shared_cache_dir() / f"opsi_cache_{key}.json"
         _cache_map[key] = DatabaseCache(cache_file=cache_file)
     return _cache_map[key]

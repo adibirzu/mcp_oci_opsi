@@ -18,7 +18,8 @@ The MCP OCI OPSI server now includes a high-performance caching system that prov
 - **N Databases** across your compartments
 - **N Hosts**
 - **Compartments:** Your compartment names
-- **Location:** `~/.mcp_oci_opsi_cache.json`
+- **Location:** `~/.mcp-oci/cache/opsi_cache.json`
+- **Shared cache (optional):** set `MCP_CACHE_BACKEND=redis` + `MCP_REDIS_URL` to reuse cache across agents/servers
 
 **Example Database Types:**
 - EXTERNAL-NONCDB: X
@@ -213,11 +214,11 @@ Claude, build cache for these compartments: [OCIDs]
 
 ### Cache Location
 
-**File:** `~/.mcp_oci_opsi_cache.json`
+**File:** `~/.mcp-oci/cache/opsi_cache.json`
 
 **View cache:**
 ```bash
-cat ~/.mcp_oci_opsi_cache.json | jq '.statistics'
+cat ~/.mcp-oci/cache/opsi_cache.json | jq '.statistics'
 ```
 
 ## Performance Comparison
@@ -273,7 +274,7 @@ cat ~/.mcp_oci_opsi_cache.json | jq '.statistics'
 └──────┬──────┘
        │
        ├─ Fast Cache Tools (7 tools) ──────> Local Cache File
-       │  • get_fleet_summary()              (~/.mcp_oci_opsi_cache.json)
+       │  • get_fleet_summary()              (~/.mcp-oci/cache/opsi_cache.json)
        │  • search_databases()
        │  • get_databases_by_compartment()   • Your databases
        │  • get_cached_statistics()          • Your hosts

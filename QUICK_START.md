@@ -144,8 +144,8 @@ You now have:
 
 **IMPORTANT**: Cache files contain sensitive OCI data and are automatically protected:
 
-- ✅ **Cache location**: `~/.mcp_oci_opsi_cache.json` (home directory, outside git)
-- ✅ **Reports location**: `~/.mcp_oci_opsi/tenancy_review_*.json`
+- ✅ **Cache location**: `~/.mcp-oci/cache/opsi_cache.json` (home directory, outside git)
+- ✅ **Reports location**: `~/.mcp-oci/cache/tenancy_review_*.json`
 - ✅ **Protected by .gitignore**: Never accidentally committed
 - ✅ **User-specific**: Isolated to your account
 

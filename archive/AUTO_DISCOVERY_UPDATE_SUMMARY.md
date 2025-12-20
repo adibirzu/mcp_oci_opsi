@@ -324,7 +324,7 @@ cd /Users/abirzu/dev/mcp_oci_opsi
 ### 2. Verify Cache
 
 ```bash
-ls -lh ~/.mcp_oci_opsi_cache_enhanced.json
+ls -lh ~/.mcp-oci/cache/opsi_cache_enhanced_<profile>.json
 ```
 
 ### 3. Use with Cline/Claude

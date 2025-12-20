@@ -290,10 +290,10 @@ CacheError: No databases found in cache
 python3 build_cache.py --select-profile
 
 # Verify cache
-cat ~/.mcp_oci_opsi_cache.json | jq '.statistics'
+cat ~/.mcp-oci/cache/opsi_cache.json | jq '.statistics'
 
 # Check last update time
-cat ~/.mcp_oci_opsi_cache.json | jq '.statistics.last_updated'
+cat ~/.mcp-oci/cache/opsi_cache.json | jq '.statistics.last_updated'
 ```
 
 ### Database Not Found in Cache

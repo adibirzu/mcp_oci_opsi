@@ -192,7 +192,7 @@ Select profile (1-2): 1
    Total databases: 12
    Total hosts: 8
 
-💾 Cache saved to: ~/.mcp_oci_opsi_cache.json
+💾 Cache saved to: ~/.mcp-oci/cache/opsi_cache.json
 ⏰ Last updated: 2025-11-18T10:30:00Z
 
 🚀 Cache ready! Use fast cache tools for instant responses.
@@ -351,7 +351,7 @@ cd ..
 rm -rf mcp_oci_opsi
 
 # Remove cache
-rm ~/.mcp_oci_opsi_cache.json
+rm ~/.mcp-oci/cache/opsi_cache.json
 ```
 
 ### Keep OCI CLI

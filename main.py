@@ -358,7 +358,7 @@ def build_database_cache(compartment_ids: str, task_progress: Optional[str] = No
     Build local cache of all databases across compartments and their children.
 
     This scans the entire compartment hierarchy recursively and stores results
-    in ~/.mcp_oci_opsi_cache.json for instant retrieval.
+    in $MCP_CACHE_DIR/opsi_cache.json for instant retrieval.
 
     FIRST-TIME SETUP: Run this once to build the cache, then use fast cache tools.
 

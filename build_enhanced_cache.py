@@ -204,7 +204,7 @@ def main():
         print("=" * 80)
         print()
         print("1. The cache is ready to use with MCP tools")
-        print("2. Cache file: ~/.mcp_oci_opsi_cache_enhanced.json")
+        print("2. Cache file: ~/.mcp-oci/cache/opsi_cache_enhanced_<profile>.json")
         print("3. Use get_fleet_summary(), search_databases(), etc. for instant responses")
         print("4. Refresh cache periodically (recommended: weekly)")
         print()

@@ -60,7 +60,8 @@ class TenancyReviewer:
         # Use profile-specific cache file
         profile_name = os.getenv("OCI_CLI_PROFILE", "DEFAULT")
         safe_profile = profile_name.replace(" ", "_").replace("/", "_")
-        cache_path = Path.home() / f".mcp_oci_opsi_cache_{safe_profile}.json"
+        cache_dir = os.getenv("MCP_CACHE_DIR") or os.getenv("OCI_MCP_CACHE_DIR") or str(Path.home() / ".mcp-oci" / "cache")
+        cache_path = Path(os.path.expanduser(cache_dir)) / f"opsi_cache_{safe_profile}.json"
         self.cache = DatabaseCache(cache_file=str(cache_path))
         
         self.target_compartment = compartment_id
@@ -761,8 +762,9 @@ class TenancyReviewer:
 
     def _save_report(self) -> str:
         """Save review report to file."""
-        report_dir = Path.home() / ".mcp_oci_opsi"
-        report_dir.mkdir(exist_ok=True)
+        cache_dir = os.getenv("MCP_CACHE_DIR") or os.getenv("OCI_MCP_CACHE_DIR") or "~/.mcp-oci/cache"
+        report_dir = Path(os.path.expanduser(cache_dir))
+        report_dir.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
         report_file = report_dir / f"tenancy_review_{timestamp}.json"

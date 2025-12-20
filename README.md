@@ -10,6 +10,12 @@ MCP (Model Context Protocol) server for Oracle Cloud Infrastructure (OCI) Operat
 
 ---
 
+## Standards
+
+- `docs/OCI_MCP_SERVER_STANDARD.md`
+
+---
+
 ## Screenshots
 
 ### Fleet Summary - Instant Overview

@@ -134,7 +134,7 @@ write_files:
       NoNewPrivileges=true
       ProtectSystem=strict
       ProtectHome=read-only
-      ReadWritePaths=/opt/mcp-oci-opsi /home/mcp/.mcp_oci_opsi
+      ReadWritePaths=/opt/mcp-oci-opsi /home/mcp/.mcp-oci/cache
       PrivateTmp=true
 
       [Install]
@@ -251,8 +251,8 @@ runcmd:
   %{ endif }
 
   # Create cache directory
-  - mkdir -p /home/mcp/.mcp_oci_opsi
-  - chown -R mcp:mcp /home/mcp/.mcp_oci_opsi
+  - mkdir -p /home/mcp/.mcp-oci/cache
+  - chown -R mcp:mcp /home/mcp/.mcp-oci
 
   # Fix permissions
   - chown -R mcp:mcp /opt/mcp-oci-opsi

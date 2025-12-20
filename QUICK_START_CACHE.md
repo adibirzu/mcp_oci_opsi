@@ -140,7 +140,7 @@ Claude, show MYDB performance           [API - detailed]
 
 ## 📁 Files Location
 
-**Cache File:** `~/.mcp_oci_opsi_cache.json`
+**Cache File:** `~/.mcp-oci/cache/opsi_cache.json`
 **Builder Script:** `~/path/to/mcp_oci_opsi/build_cache.py`
 
 ## 📖 Documentation

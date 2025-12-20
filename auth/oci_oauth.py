@@ -32,7 +32,7 @@ def create_oci_auth_provider(
 
     Args:
         base_url: Public URL of the server (for OAuth callbacks)
-        storage_path: Path for encrypted token storage (default: ~/.mcp_oci_opsi/oauth)
+        storage_path: Path for encrypted token storage (default: ~/.mcp-oci/cache/oauth)
 
     Returns:
         Configured OCIProvider instance
@@ -81,7 +81,8 @@ def create_oci_auth_provider(
 
     # Set up encrypted disk storage for tokens
     if storage_path is None:
-        storage_path = str(Path.home() / ".mcp_oci_opsi" / "oauth")
+        base_cache = os.path.expanduser(os.getenv("MCP_CACHE_DIR") or os.getenv("OCI_MCP_CACHE_DIR") or "~/.mcp-oci/cache")
+        storage_path = str(Path(base_cache) / "oauth")
 
     # Create storage directory
     Path(storage_path).mkdir(parents=True, exist_ok=True)

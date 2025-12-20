@@ -126,12 +126,12 @@ START
 
 All scripts generate these outputs:
 
-1. **Cache File**: `~/.mcp_oci_opsi_cache.json`
+1. **Cache File**: `~/.mcp-oci/cache/opsi_cache.json`
    - Optimized for instant queries
    - Valid for 24 hours
    - ~100-500 KB depending on fleet size
 
-2. **Review Report**: `~/.mcp_oci_opsi/tenancy_review_TIMESTAMP.json`
+2. **Review Report**: `~/.mcp-oci/cache/tenancy_review_TIMESTAMP.json`
    - Comprehensive inventory report
    - Includes recommendations
    - Useful for audits and documentation

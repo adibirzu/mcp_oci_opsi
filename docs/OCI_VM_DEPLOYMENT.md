@@ -629,7 +629,7 @@ sudo journalctl -u mcp-oci-opsi --since "1 hour ago"
 sudo tar -czvf /tmp/mcp-backup.tar.gz \
   /opt/mcp-oci-opsi/.env.local \
   /home/mcp/.oci \
-  /home/mcp/.mcp_oci_opsi
+  /home/mcp/.mcp-oci/cache
 
 # Download backup
 scp opc@<public-ip>:/tmp/mcp-backup.tar.gz ./

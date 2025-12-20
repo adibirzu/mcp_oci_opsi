@@ -386,7 +386,7 @@ User Query: "Show CPU forecast for database PRODDB01 for next 30 days"
 └─────────────────────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────────────────────────────────────────────────────────────────────────────────┐
-│                             Local Cache File (~/.mcp_oci_opsi_cache.json)                 │
+│                             Local Cache File (~/.mcp-oci/cache/opsi_cache.json)                 │
 │                                                                                           │
 │  {                                                                                        │
 │    "metadata": {                                                                          │

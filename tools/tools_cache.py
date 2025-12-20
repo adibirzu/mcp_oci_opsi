@@ -48,7 +48,7 @@ def build_database_cache(
     Build cache by scanning all databases across compartments and their children.
 
     This scans the entire compartment hierarchy and stores results locally
-    for instant retrieval. Cache is saved to ~/.mcp_oci_opsi_cache.json
+    for instant retrieval. Cache is saved to ~/.mcp-oci/cache/opsi_cache.json
 
     Args:
         compartment_ids: List of root compartment OCIDs to scan recursively. If omitted,

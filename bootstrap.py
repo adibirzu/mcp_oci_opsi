@@ -170,7 +170,8 @@ class MCPBootstrap:
         logger.info("Checking database cache...")
         
         profile = os.getenv("OCI_CLI_PROFILE", "DEFAULT")
-        cache_file = Path.home() / f".mcp_oci_opsi_cache_{profile}.json"
+        cache_dir = os.getenv("MCP_CACHE_DIR") or os.getenv("OCI_MCP_CACHE_DIR") or str(Path.home() / ".mcp-oci" / "cache")
+        cache_file = Path(os.path.expanduser(cache_dir)) / f"opsi_cache_{profile}.json"
         
         if cache_file.exists():
             logger.info(f"✅ Cache file exists: {cache_file}")
